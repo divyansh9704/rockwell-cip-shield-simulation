@@ -33,6 +33,17 @@ document.addEventListener('DOMContentLoaded', () => {
   const toggleAudioBtn = document.getElementById('toggleAudioBtn');
   const audioIcon = document.getElementById('audioIcon');
 
+  
+  // Contextual Banner & Guided Demo DOM
+  const archBanner = document.getElementById('archBanner');
+  const bannerIcon = document.getElementById('bannerIcon');
+  const bannerTitle = document.getElementById('bannerTitle');
+  const bannerDesc = document.getElementById('bannerDesc');
+  const guidedDemoBtn = document.getElementById('guidedDemoBtn');
+  const demoIcon = document.getElementById('demoIcon');
+  const demoText = document.getElementById('demoText');
+  let demoInterval = null;
+
   // Status & Metrics DOM
   const overallDot = document.getElementById('overallStatusDot');
   const overallText = document.getElementById('overallStatusText');
@@ -171,7 +182,15 @@ document.addEventListener('DOMContentLoaded', () => {
       frameDesc.innerHTML = '<strong>Command:</strong> SendRRData (0x006F) | <strong>CIP Service:</strong> Forward Open (0x4E) | <strong>Target Slot:</strong> 0x02 | <strong>Security Tag:</strong> Poly1305 Valid';
 
       overallDot.className = 'pulse-indicator';
-      overallText.textContent = 'SYSTEM NOMINAL (PROTECTED)';
+      overallText.textContent = 'SYSTEM NOMINAL (PROTECTED);'
+
+      if (archBanner) {
+        archBanner.className = 'architecture-banner green';
+        bannerIcon.textContent = '🛡️';
+        bannerTitle.textContent = 'PROPOSED: CIP-Shield Architecture Active';
+        bannerDesc.innerHTML = 'Linux eBPF kernel fast-path offloads cryptography from the ControlLogix CPU. Packets verified in &le; 13.82&mu;s. Hard determinism maintained with zero packet jitter.';
+      }
+
 
       setFactoryRunning(true);
       logMessage('info', 'Switched to CIP-Shield Architecture: eBPF zero-copy kernel filter active. Micro-crypto enabled.');
@@ -211,7 +230,15 @@ document.addEventListener('DOMContentLoaded', () => {
       frameDesc.innerHTML = '<strong>Command:</strong> TLS Handshake (0x16) | <strong>Record:</strong> DTLS 1.3 | <strong>Crypto CPU:</strong> 94% Overload | <strong>Latency Drift:</strong> +32.4ms';
 
       overallDot.className = 'pulse-indicator warn';
-      overallText.textContent = 'HIGH JITTER (WATCHDOG BREACH)';
+      overallText.textContent = 'HIGH JITTER (WATCHDOG BREACH);'
+
+      if (archBanner) {
+        archBanner.className = 'architecture-banner amber';
+        bannerIcon.textContent = '🛑';
+        bannerTitle.textContent = 'NAIVE FIX: Standard TLS Overloads PLC & Halts Assembly Line';
+        bannerDesc.innerHTML = 'Standard TLS 1.3 crypto handshakes spike PLC CPU to 93%, pushing cyclic latency to 32.2ms. This breaches the 5.0ms Safety Watchdog threshold, triggering an automatic E-STOP halt ($4,333/min downtime). Click "CIP-Shield" to restore production!';
+      }
+
 
       setTimeout(() => {
         if (state.mode === 'tls') {
@@ -527,4 +554,56 @@ document.addEventListener('DOMContentLoaded', () => {
   setInterval(updateMetrics, 200);
   requestAnimationFrame(drawOscilloscope);
   setMode('shield');
+}
+
+  // 30-Second Guided Demo Tour Implementation
+  function stopGuidedDemo() {
+    if (demoInterval) {
+      clearInterval(demoInterval);
+      demoInterval = null;
+    }
+    if (guidedDemoBtn) {
+      guidedDemoBtn.classList.remove('running');
+      demoIcon.textContent = '▶';
+      demoText.textContent = '30s Auto Demo';
+    }
+  }
+
+  function startGuidedDemo() {
+    if (demoInterval) {
+      stopGuidedDemo();
+      return;
+    }
+    guidedDemoBtn.classList.add('running');
+    demoIcon.textContent = '⏹';
+    demoText.textContent = 'Stop Demo';
+
+    logMessage('info', '=== [DEMO STARTED] 30-Second Guided Presentation Mode ===');
+    setMode('legacy');
+    logMessage('info', '[DEMO STEP 1/3] Observing unencrypted legacy brownfield ControlLogix on Port 44818...');
+
+    let elapsed = 0;
+    demoInterval = setInterval(() => {
+      elapsed += 1;
+      
+      if (elapsed === 5) {
+        logMessage('warn', '[DEMO ATTACK] Infiltrating CVE-2024-6242 slot bypass exploit into legacy PLC...');
+        triggerAttack();
+      } else if (elapsed === 11) {
+        logMessage('info', '[DEMO STEP 2/3] Switching to Naive Standard TLS Retrofit...');
+        setMode('tls');
+      } else if (elapsed === 18) {
+        logMessage('info', '[DEMO STEP 3/3] Activating Proposed CIP-Shield Architecture...');
+        setMode('shield');
+      } else if (elapsed === 25) {
+        logMessage('success', '=== [DEMO COMPLETE] CIP-Shield successfully demonstrated: Zero-Jitter + Total Security! ===');
+        stopGuidedDemo();
+      }
+    }, 1000);
+  }
+
+  if (guidedDemoBtn) {
+    guidedDemoBtn.addEventListener('click', startGuidedDemo);
+  }
+
 });

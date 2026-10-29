@@ -30,6 +30,12 @@
         <button id="showQrBtn" class="icon-toggle-btn highlight" title="Show Phone QR Code">
           <span>📱</span> <span class="btn-text">Phone QR</span>
         </button>
+        
+        <div class="company-badge-header">
+          <span class="rok-badge">ROCKWELL PUNE R&D ARCHITECTURE</span>
+          <span class="sys-badge">ControlLogix 5580 • EtherNet/IP (Port 44818)</span>
+        </div>
+
         <div class="header-status">
           <div class="pulse-indicator" id="overallStatusDot"></div>
           <span id="overallStatusText">SYSTEM NOMINAL</span>
@@ -55,6 +61,19 @@
         <span class="tab-sub">Heavy Crypto Spikes (32ms Jitter Halt)</span>
       </button>
     </nav>
+
+    <!-- REAL-TIME CONTEXTUAL ARCHITECTURE BANNER -->
+    <div class="architecture-banner green" id="archBanner">
+      <div class="banner-icon" id="bannerIcon">🛡️</div>
+      <div class="banner-content">
+        <div class="banner-title" id="bannerTitle">PROPOSED: CIP-Shield Hardware Enclave Active</div>
+        <div class="banner-desc" id="bannerDesc">Linux eBPF kernel fast-path offloads cryptography from the ControlLogix CPU. Packets verified in &le; 13.82&mu;s. Hard determinism maintained with zero packet jitter.</div>
+      </div>
+      <button class="guided-demo-btn" id="guidedDemoBtn">
+        <span class="demo-icon" id="demoIcon">▶</span> <span class="demo-text" id="demoText">30s Auto Demo</span>
+      </button>
+    </div>
+
 
     <!-- MAIN DASHBOARD GRID -->
     <main class="dashboard-grid">

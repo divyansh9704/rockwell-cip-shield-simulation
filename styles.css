@@ -928,3 +928,113 @@ html, body {
     font-size: 17px;
   }
 }
+
+
+/* ==================== ROCKWELL COMPANY TAG & ARCHITECTURE BANNER ==================== */
+.company-badge-header {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  margin-right: 12px;
+}
+.rok-badge {
+  background: rgba(212, 27, 44, 0.15);
+  color: #FF5252;
+  border: 1px solid rgba(212, 27, 44, 0.4);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  padding: 2px 7px;
+  border-radius: 3px;
+  text-transform: uppercase;
+}
+.sys-badge {
+  color: #94A3B8;
+  font-size: 9.5px;
+  font-family: var(--font-mono);
+}
+
+.architecture-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: 6px;
+  margin-bottom: 14px;
+  transition: all 0.3s ease;
+  border: 1px solid rgba(0, 230, 118, 0.3);
+  background: rgba(0, 230, 118, 0.08);
+}
+.architecture-banner.green {
+  border-color: rgba(0, 230, 118, 0.4);
+  background: rgba(0, 230, 118, 0.08);
+}
+.architecture-banner.red {
+  border-color: rgba(212, 27, 44, 0.5);
+  background: rgba(212, 27, 44, 0.12);
+}
+.architecture-banner.amber {
+  border-color: rgba(255, 179, 0, 0.5);
+  background: rgba(255, 179, 0, 0.12);
+}
+.banner-icon {
+  font-size: 22px;
+  flex-shrink: 0;
+}
+.banner-content {
+  flex: 1;
+}
+.banner-title {
+  font-weight: 700;
+  font-size: 12.5px;
+  margin-bottom: 2px;
+  letter-spacing: 0.3px;
+}
+.architecture-banner.green .banner-title { color: #00E676; }
+.architecture-banner.red .banner-title { color: #FF5252; }
+.architecture-banner.amber .banner-title { color: #FFB300; }
+
+.banner-desc {
+  color: #CBD5E1;
+  font-size: 11px;
+  line-height: 1.38;
+}
+
+.guided-demo-btn {
+  background: #D41B2C;
+  color: #FFFFFF;
+  border: none;
+  border-radius: 4px;
+  padding: 7px 12px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+.guided-demo-btn:hover {
+  background: #B31422;
+}
+.guided-demo-btn.running {
+  background: #FFB300;
+  color: #0E1B2A;
+}
+
+@media (max-width: 768px) {
+  .company-badge-header {
+    display: none;
+  }
+  .architecture-banner {
+    flex-wrap: wrap;
+  }
+  .guided-demo-btn {
+    width: 100%;
+    justify-content: center;
+    margin-top: 4px;
+  }
+}
