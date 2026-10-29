@@ -22,9 +22,18 @@
           <p>Zero-Jitter Hardware-Enclave Edge Proxy for ControlLogix</p>
         </div>
       </div>
-      <div class="header-status">
-        <div class="pulse-indicator" id="overallStatusDot"></div>
-        <span id="overallStatusText">SYSTEM NOMINAL</span>
+      
+      <div class="header-controls">
+        <button id="toggleAudioBtn" class="icon-toggle-btn" title="Toggle Industrial Audio FX">
+          <span id="audioIcon">🔇</span> <span class="btn-text">Audio</span>
+        </button>
+        <button id="showQrBtn" class="icon-toggle-btn highlight" title="Show Phone QR Code">
+          <span>📱</span> <span class="btn-text">Phone QR</span>
+        </button>
+        <div class="header-status">
+          <div class="pulse-indicator" id="overallStatusDot"></div>
+          <span id="overallStatusText">SYSTEM NOMINAL</span>
+        </div>
       </div>
     </header>
 
@@ -33,7 +42,7 @@
       <button class="mode-tab active" data-mode="shield">
         <span class="tab-badge green">PROPOSED</span>
         <span class="tab-title">CIP-Shield Architecture</span>
-        <span class="tab-sub">eBPF + Micro-Crypto (0.8ms Jitter-Free)</span>
+        <span class="tab-sub">eBPF + Micro-Crypto (0.84ms Jitter-Free)</span>
       </button>
       <button class="mode-tab" data-mode="legacy">
         <span class="tab-badge red">VULNERABLE</span>
@@ -50,7 +59,7 @@
     <!-- MAIN DASHBOARD GRID -->
     <main class="dashboard-grid">
       
-      <!-- LEFT / TOP PANEL: INTERACTIVE PHYSICAL & NETWORK TOPOLOGY -->
+      <!-- LEFT PANEL: INTERACTIVE PHYSICAL & NETWORK TOPOLOGY -->
       <section class="panel topology-panel">
         <div class="panel-header">
           <h2>1. Real-Time Physical & Network Topology</h2>
@@ -133,6 +142,25 @@
           </div>
         </div>
 
+        <!-- CIP PACKET DEEP INSPECTOR -->
+        <div class="packet-inspector">
+          <div class="inspector-header">
+            <span>CIP ENCAPSULATION FRAME INSPECTOR</span>
+            <span class="frame-tag" id="frameStatus">STATUS: 0x0000 (SUCCESS)</span>
+          </div>
+          <div class="inspector-body">
+            <div class="hex-grid" id="hexView">
+              <span class="byte">6F</span><span class="byte">00</span><span class="byte">18</span><span class="byte">00</span>
+              <span class="byte">A4</span><span class="byte">12</span><span class="byte">B8</span><span class="byte">00</span>
+              <span class="byte highlight" id="serviceByte">4E</span><span class="byte">02</span><span class="byte">20</span><span class="byte">67</span>
+              <span class="byte">24</span><span class="byte">01</span><span class="byte">00</span><span class="byte">00</span>
+            </div>
+            <div class="frame-desc" id="frameDesc">
+              <strong>Command:</strong> SendRRData (0x006F) | <strong>CIP Service:</strong> Forward Open (0x4E) | <strong>Target Slot:</strong> 0x02 | <strong>Security Tag:</strong> Poly1305 Valid
+            </div>
+          </div>
+        </div>
+
         <!-- SYSTEM EVENT LOG -->
         <div class="event-terminal">
           <div class="terminal-bar">
@@ -147,7 +175,7 @@
         </div>
       </section>
 
-      <!-- RIGHT / BOTTOM PANEL: REAL-TIME TELEMETRY & OSCILLOSCOPE -->
+      <!-- RIGHT PANEL: REAL-TIME TELEMETRY & OSCILLOSCOPE -->
       <section class="panel telemetry-panel">
         <div class="panel-header">
           <h2>2. Deterministic Telemetry & Latency Oscilloscope</h2>
@@ -219,6 +247,25 @@
 
           <h4>3. Business Impact to State</h4>
           <p><em>"This avoids $2.6 Million per year in unplanned downtime per automotive plant and extends the life of Rockwell's massive brownfield installed base without requiring a multi-million-dollar chassis rip-and-replace."</em></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- QR CODE MODAL -->
+    <div class="modal-backdrop" id="qrModal">
+      <div class="modal-card" style="text-align: center; max-width: 400px;">
+        <div class="modal-header">
+          <h3>📱 Scan to Open on Your Smartphone</h3>
+          <button class="modal-close-btn" id="closeQrModalBtn">&times;</button>
+        </div>
+        <div class="modal-body">
+          <img src="qr_code.png" alt="Scan QR code" style="width: 220px; height: 220px; border-radius: 6px; margin: 10px auto; display: block; border: 2px solid var(--border-color);">
+          <p style="font-size: 11px; color: var(--text-muted); margin-top: 8px;">
+            Point your smartphone camera to launch this live simulation in Safari or Chrome.
+          </p>
+          <p style="font-family: var(--font-mono); font-size: 10.5px; color: var(--cyan-accent); word-break: break-all; margin-top: 6px;">
+            https://divyansh9704.github.io/rockwell-cip-shield-simulation/
+          </p>
         </div>
       </div>
     </div>

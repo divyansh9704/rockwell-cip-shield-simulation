@@ -54,7 +54,7 @@ html, body {
   border: 1px solid var(--border-color);
   border-left: 4px solid var(--rok-red);
   border-radius: 6px;
-  padding: 12px 16px;
+  padding: 10px 14px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -101,6 +101,38 @@ html, body {
 .brand-details p {
   font-size: 11px;
   color: var(--text-muted);
+}
+
+.header-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.icon-toggle-btn {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  color: var(--text-main);
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  transition: all 0.2s ease;
+}
+
+.icon-toggle-btn:hover {
+  background: #25334E;
+  border-color: var(--border-light);
+}
+
+.icon-toggle-btn.highlight {
+  border-color: var(--cyan-accent);
+  color: var(--cyan-accent);
 }
 
 .header-status {
@@ -523,10 +555,6 @@ html, body {
   top: 5px;
 }
 
-.cip-packet.quarantined {
-  animation: quenchPacket 0.5s forwards ease-out;
-}
-
 @keyframes flyPacket {
   0% { left: 0%; opacity: 0; }
   10% { opacity: 1; }
@@ -534,10 +562,70 @@ html, body {
   100% { left: 100%; opacity: 0; }
 }
 
-@keyframes quenchPacket {
-  0% { transform: scale(1); opacity: 1; }
-  50% { transform: scale(1.6); background: #FFEA00; }
-  100% { transform: scale(0); opacity: 0; }
+/* CIP PACKET DEEP INSPECTOR */
+.packet-inspector {
+  background: #090E17;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  padding: 8px 10px;
+  font-family: var(--font-mono);
+}
+
+.inspector-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--text-muted);
+  border-bottom: 1px solid #1E293B;
+  padding-bottom: 4px;
+  margin-bottom: 6px;
+}
+
+.frame-tag {
+  color: var(--green-nominal);
+  font-size: 8.5px;
+}
+
+.hex-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 6px;
+}
+
+.byte {
+  background: #172033;
+  color: #CBD5E1;
+  padding: 2px 5px;
+  border-radius: 2px;
+  font-size: 9.5px;
+  border: 1px solid #23304A;
+}
+
+.byte.highlight {
+  background: rgba(0, 240, 255, 0.2);
+  color: var(--cyan-accent);
+  border-color: var(--cyan-accent);
+  font-weight: 700;
+}
+
+.byte.attack-byte {
+  background: rgba(212, 27, 44, 0.3);
+  color: var(--rok-red);
+  border-color: var(--rok-red);
+  font-weight: 700;
+}
+
+.frame-desc {
+  font-size: 9.5px;
+  color: #94A3B8;
+  line-height: 1.4;
+}
+
+.frame-desc strong {
+  color: var(--text-main);
 }
 
 /* TERMINAL / LOG BUS */
@@ -566,10 +654,10 @@ html, body {
 }
 
 .terminal-body {
-  height: 90px;
+  height: 85px;
   padding: 6px 8px;
   overflow-y: auto;
-  font-size: 10px;
+  font-size: 9.5px;
   line-height: 1.45;
   display: flex;
   flex-direction: column;
@@ -715,7 +803,7 @@ html, body {
   background: #233452;
 }
 
-/* MODAL DIALOG */
+/* MODAL DIALOGS */
 .modal-backdrop {
   position: fixed;
   top: 0;
@@ -758,7 +846,7 @@ html, body {
 }
 
 .modal-header h3 {
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 800;
   color: #FFFFFF;
 }
@@ -811,13 +899,13 @@ html, body {
   }
 
   .topology-stage {
-    min-height: 160px;
-    padding: 10px 6px;
+    min-height: 150px;
+    padding: 8px 4px;
   }
 
   .topo-node {
-    width: 74px;
-    padding: 6px 4px;
+    width: 70px;
+    padding: 6px 3px;
   }
 
   .node-icon {
@@ -825,11 +913,11 @@ html, body {
   }
 
   .node-label {
-    font-size: 9px;
+    font-size: 8.5px;
   }
 
   .node-sub {
-    font-size: 8px;
+    font-size: 7.5px;
   }
 
   .metrics-grid {

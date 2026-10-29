@@ -1,4 +1,4 @@
-// ROCKWELL AUTOMATION CIP-SHIELD INDUSTRIAL SIMULATION ENGINE
+// ROCKWELL AUTOMATION CIP-SHIELD INDUSTRIAL SIMULATION ENGINE v2.4
 
 document.addEventListener('DOMContentLoaded', () => {
   // Application State
@@ -12,7 +12,8 @@ document.addEventListener('DOMContentLoaded', () => {
     currentLatency: 0.84,
     currentJitter: 0.04,
     currentCpu: 24,
-    packetCounter: 0
+    soundEnabled: false,
+    audioCtx: null
   };
 
   // DOM Elements
@@ -23,6 +24,15 @@ document.addEventListener('DOMContentLoaded', () => {
   const closeModalBtn = document.getElementById('closeModalBtn');
   const explainerModal = document.getElementById('explainerModal');
 
+  // QR Modal Elements
+  const showQrBtn = document.getElementById('showQrBtn');
+  const qrModal = document.getElementById('qrModal');
+  const closeQrModalBtn = document.getElementById('closeQrModalBtn');
+
+  // Audio Toggle
+  const toggleAudioBtn = document.getElementById('toggleAudioBtn');
+  const audioIcon = document.getElementById('audioIcon');
+
   // Status & Metrics DOM
   const overallDot = document.getElementById('overallStatusDot');
   const overallText = document.getElementById('overallStatusText');
@@ -32,6 +42,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const cpuBar = document.getElementById('cpuBar');
   const metricLoss = document.getElementById('metricLoss');
   const syslogConsole = document.getElementById('syslogConsole');
+
+  // Packet Inspector DOM
+  const frameStatus = document.getElementById('frameStatus');
+  const serviceByte = document.getElementById('serviceByte');
+  const frameDesc = document.getElementById('frameDesc');
 
   // Topology DOM
   const nodeShield = document.getElementById('nodeShield');
@@ -53,7 +68,65 @@ document.addEventListener('DOMContentLoaded', () => {
   const canvas = document.getElementById('oscilloscopeCanvas');
   const ctx = canvas.getContext('2d');
 
-  // 1. Syslog Logger Helper
+  // 1. Web Audio API Synthesizer (Zero External Audio Files)
+  function initAudio() {
+    if (!state.audioCtx) {
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      state.audioCtx = new AudioContext();
+    }
+  }
+
+  function playTone(freq, type, duration, vol = 0.1) {
+    if (!state.soundEnabled || !state.audioCtx) return;
+    try {
+      const osc = state.audioCtx.createOscillator();
+      const gain = state.audioCtx.createGain();
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, state.audioCtx.currentTime);
+      gain.gain.setValueAtTime(vol, state.audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, state.audioCtx.currentTime + duration);
+      osc.connect(gain);
+      gain.connect(state.audioCtx.destination);
+      osc.start();
+      osc.stop(state.audioCtx.currentTime + duration);
+    } catch (e) {
+      console.warn('Audio playback error', e);
+    }
+  }
+
+  function playAlarmTone() {
+    playTone(880, 'sawtooth', 0.15, 0.15);
+    setTimeout(() => playTone(440, 'sawtooth', 0.25, 0.15), 160);
+  }
+
+  function playPingTone() {
+    playTone(1200, 'sine', 0.05, 0.04);
+  }
+
+  function playInterceptTone() {
+    playTone(1760, 'sine', 0.08, 0.1);
+    setTimeout(() => playTone(2200, 'sine', 0.1, 0.08), 90);
+  }
+
+  toggleAudioBtn.addEventListener('click', () => {
+    initAudio();
+    if (state.audioCtx && state.audioCtx.state === 'suspended') {
+      state.audioCtx.resume();
+    }
+    state.soundEnabled = !state.soundEnabled;
+    if (state.soundEnabled) {
+      audioIcon.textContent = '🔊';
+      toggleAudioBtn.style.borderColor = 'var(--green-nominal)';
+      logMessage('info', 'Industrial audio synthesis enabled.');
+      playTone(1000, 'sine', 0.1, 0.1);
+    } else {
+      audioIcon.textContent = '🔇';
+      toggleAudioBtn.style.borderColor = 'var(--border-color)';
+      logMessage('info', 'Audio muted.');
+    }
+  });
+
+  // 2. Syslog Logger Helper
   function logMessage(type, message) {
     const line = document.createElement('div');
     line.className = `log-line ${type}`;
@@ -62,13 +135,12 @@ document.addEventListener('DOMContentLoaded', () => {
     syslogConsole.appendChild(line);
     syslogConsole.scrollTop = syslogConsole.scrollHeight;
 
-    // Keep log buffer bounded
     if (syslogConsole.children.length > 30) {
       syslogConsole.removeChild(syslogConsole.children[0]);
     }
   }
 
-  // 2. Mode Switching Logic
+  // 3. Mode Switching Logic
   function setMode(newMode) {
     state.mode = newMode;
     state.isUnderAttack = false;
@@ -92,6 +164,12 @@ document.addEventListener('DOMContentLoaded', () => {
       nodeShield.style.opacity = '1';
       nodeShield.classList.remove('faulted');
 
+      frameStatus.textContent = 'STATUS: 0x0000 (SUCCESS - VALIDATED)';
+      frameStatus.style.color = 'var(--green-nominal)';
+      serviceByte.textContent = '4E';
+      serviceByte.className = 'byte highlight';
+      frameDesc.innerHTML = '<strong>Command:</strong> SendRRData (0x006F) | <strong>CIP Service:</strong> Forward Open (0x4E) | <strong>Target Slot:</strong> 0x02 | <strong>Security Tag:</strong> Poly1305 Valid';
+
       overallDot.className = 'pulse-indicator';
       overallText.textContent = 'SYSTEM NOMINAL (PROTECTED)';
 
@@ -105,6 +183,12 @@ document.addEventListener('DOMContentLoaded', () => {
       shieldBadge.style.color = 'var(--rok-red)';
       shieldBadge.style.background = 'rgba(212, 27, 44, 0.15)';
       nodeShield.style.opacity = '0.7';
+
+      frameStatus.textContent = 'STATUS: 0x0000 (UNAUTHENTICATED CLEARTEXT)';
+      frameStatus.style.color = 'var(--amber-warning)';
+      serviceByte.textContent = '4E';
+      serviceByte.className = 'byte highlight';
+      frameDesc.innerHTML = '<strong>Command:</strong> SendRRData (0x006F) | <strong>CIP Service:</strong> Forward Open (0x4E) | <strong>Target Slot:</strong> 0x02 | <strong>Security Tag:</strong> None (Cleartext)';
 
       overallDot.className = 'pulse-indicator warn';
       overallText.textContent = 'UNENCRYPTED BROWNFIELD';
@@ -120,10 +204,15 @@ document.addEventListener('DOMContentLoaded', () => {
       shieldBadge.style.background = 'rgba(255, 179, 0, 0.15)';
       nodeShield.style.opacity = '1';
 
+      frameStatus.textContent = 'STATUS: 0x001F (BUFFER FULL / JITTER LAG)';
+      frameStatus.style.color = 'var(--rok-red)';
+      serviceByte.textContent = '4E';
+      serviceByte.className = 'byte highlight';
+      frameDesc.innerHTML = '<strong>Command:</strong> TLS Handshake (0x16) | <strong>Record:</strong> DTLS 1.3 | <strong>Crypto CPU:</strong> 94% Overload | <strong>Latency Drift:</strong> +32.4ms';
+
       overallDot.className = 'pulse-indicator warn';
       overallText.textContent = 'HIGH JITTER (WATCHDOG BREACH)';
 
-      // TLS triggers watchdog failure automatically
       setTimeout(() => {
         if (state.mode === 'tls') {
           triggerWatchdogHalt();
@@ -135,7 +224,7 @@ document.addEventListener('DOMContentLoaded', () => {
     updateMetrics();
   }
 
-  // 3. Factory Physical State Control
+  // 4. Factory Physical State Control
   function setFactoryRunning(isRunning) {
     if (isRunning) {
       factoryGraphic.classList.remove('halted');
@@ -154,12 +243,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // 4. Financial Downtime Counter
+  // 5. Financial Downtime Counter
   function startDowntimeTimer() {
     if (state.downtimeTimer) return;
     state.downtimeTimer = setInterval(() => {
       state.downtimeSeconds++;
-      // Industrial automotive rate: $260,000 / hour = $72.22 / sec
       const loss = state.downtimeSeconds * 72.22;
       metricLoss.textContent = `$${loss.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
     }, 1000);
@@ -176,6 +264,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setFactoryRunning(false);
     overallDot.className = 'pulse-indicator fault';
     overallText.textContent = 'WATCHDOG TRIP (E-STOP)';
+    playAlarmTone();
     logMessage('error', '[WATCHDOG] Cyclic latency exceeded 5.0ms threshold (measured: 32.4ms). Controller triggered safety E-Stop!');
   }
 
@@ -184,16 +273,24 @@ document.addEventListener('DOMContentLoaded', () => {
     overallDot.className = 'pulse-indicator fault';
     overallText.textContent = 'MAJOR FAULT (MNRF)';
     nodeShield.classList.add('faulted');
+    playAlarmTone();
+
+    frameStatus.textContent = 'STATUS: 0x00FF (FATAL PARSING EXCEPTION)';
+    frameStatus.style.color = 'var(--rok-red)';
+    serviceByte.textContent = 'FF';
+    serviceByte.className = 'byte attack-byte';
+    frameDesc.innerHTML = '<strong>Exploit:</strong> CVE-2026-9637 Malformed Frame | <strong>Target:</strong> Slot 0x00 Backplane | <strong>State:</strong> Major Non-Recoverable Fault (MNRF)';
+
     logMessage('error', '[CRITICAL] Malformed CIP packet (CVE-2026-9637) penetrated chassis! Memory parsing exception.');
     logMessage('error', '[MNRF] Major Non-Recoverable Fault on ControlLogix 5580! Manual chassis power-cycle required!');
   }
 
-  // 5. Trigger CIP Attack Simulation
+  // 6. Trigger CIP Attack Simulation
   triggerAttackBtn.addEventListener('click', () => {
     state.isUnderAttack = true;
+    playTone(600, 'triangle', 0.2, 0.2);
     logMessage('warn', '🚨 INJECTING CIP EXPLOIT PACKET: Forged Service 0x4E with Slot Bypass Payload (CVE-2024-6242)...');
 
-    // Spawn red packet in stream 1
     spawnPacket(stream1, true);
 
     if (state.mode === 'legacy') {
@@ -211,12 +308,17 @@ document.addEventListener('DOMContentLoaded', () => {
       }, 600);
     } else if (state.mode === 'shield') {
       setTimeout(() => {
-        // Intercept at CIP-Shield
+        playInterceptTone();
+        frameStatus.textContent = 'STATUS: 0x0000 (EXPLOIT QUARANTINED)';
+        frameStatus.style.color = 'var(--cyan-accent)';
+        serviceByte.textContent = '4E';
+        serviceByte.className = 'byte highlight';
+        frameDesc.innerHTML = '<strong>Intercept:</strong> Rogue Service 0x4E Shunted to Ring Buffer | <strong>Action:</strong> Synthetic Safe Beacon Injected | <strong>Latency:</strong> 0.84ms';
+
         logMessage('success', '🛡️ [CIP-SHIELD INTERCEPT] eBPF filter caught illegal Service 0x4E payload! Threat quarantined in ring buffer.');
         logMessage('info', '⚡ [SYNTHETIC KEEP-ALIVE] Injecting deterministic safe beacon to ControlLogix backplane (Latency: 0.84ms).');
         logMessage('success', '📡 [SOC DISPATCH] Incident report & threat signature streamed to FactoryTalk DataMosaix.');
         
-        // Green packet continues to PLC
         spawnPacket(stream2, false);
         spawnPacket(stream3, false);
       }, 500);
@@ -228,6 +330,7 @@ document.addEventListener('DOMContentLoaded', () => {
     state.downtimeSeconds = 0;
     metricLoss.textContent = '$0.00';
     setMode('shield');
+    playTone(1000, 'sine', 0.1, 0.05);
     logMessage('info', 'Simulation reset to baseline state.');
   });
 
@@ -246,6 +349,21 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
+  // QR Modal Handlers
+  showQrBtn.addEventListener('click', () => {
+    qrModal.classList.add('active');
+  });
+
+  closeQrModalBtn.addEventListener('click', () => {
+    qrModal.classList.remove('active');
+  });
+
+  qrModal.addEventListener('click', (e) => {
+    if (e.target === qrModal) {
+      qrModal.classList.remove('active');
+    }
+  });
+
   // Mode Tab Click Events
   modeTabs.forEach(tab => {
     tab.addEventListener('click', () => {
@@ -258,6 +376,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const packet = document.createElement('div');
     packet.className = `cip-packet ${isAttack ? 'attack' : ''}`;
     container.appendChild(packet);
+    if (!isAttack && state.soundEnabled && Math.random() < 0.25) {
+      playPingTone();
+    }
     setTimeout(() => {
       if (packet.parentNode) {
         packet.parentNode.removeChild(packet);
@@ -274,7 +395,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }, 1400);
 
-  // 6. Real-Time Telemetry Simulation Loop
+  // 7. Real-Time Telemetry Simulation Loop
   function updateMetrics() {
     let targetLatency = 0.84;
     let targetJitter = 0.04;
@@ -304,7 +425,6 @@ document.addEventListener('DOMContentLoaded', () => {
     state.currentJitter = targetJitter;
     state.currentCpu = targetCpu;
 
-    // Update DOM Metrics
     metricLatency.innerHTML = `${targetLatency.toFixed(2)} <span class="unit">ms</span>`;
     metricJitter.innerHTML = `&plusmn;${targetJitter.toFixed(2)} <span class="unit">ms</span>`;
     metricCpu.innerHTML = `${targetCpu} <span class="unit">%</span>`;
@@ -324,21 +444,18 @@ document.addEventListener('DOMContentLoaded', () => {
       metricLatency.className = 'metric-val green';
     }
 
-    // Push to oscilloscope buffer
     state.latencyHistory.push(targetLatency);
     state.latencyHistory.shift();
   }
 
-  // 7. Oscilloscope Canvas Renderer
+  // 8. Oscilloscope Canvas Renderer
   function drawOscilloscope() {
     const width = canvas.width;
     const height = canvas.height;
 
-    // Clear background
     ctx.fillStyle = '#080C14';
     ctx.fillRect(0, 0, width, height);
 
-    // Draw Grid Lines
     ctx.strokeStyle = '#1E293B';
     ctx.lineWidth = 1;
     for (let x = 0; x < width; x += 50) {
@@ -354,7 +471,6 @@ document.addEventListener('DOMContentLoaded', () => {
       ctx.stroke();
     }
 
-    // Draw 5.0ms Watchdog Trip Threshold Line (Red Dashed)
     const watchdogY = height - (5.0 / 40.0 * (height - 30)) - 15;
     ctx.strokeStyle = '#D41B2C';
     ctx.setLineDash([6, 4]);
@@ -363,14 +479,12 @@ document.addEventListener('DOMContentLoaded', () => {
     ctx.moveTo(0, watchdogY);
     ctx.lineTo(width, watchdogY);
     ctx.stroke();
-    ctx.setLineDash([]); // Reset dash
+    ctx.setLineDash([]);
 
-    // Watchdog Text Label
     ctx.fillStyle = '#D41B2C';
     ctx.font = '9px "JetBrains Mono", monospace';
     ctx.fillText('WATCHDOG LIMIT (5.0 ms)', 10, watchdogY - 4);
 
-    // Draw 1.0ms RPI Target Line (Cyan Dotted)
     const targetY = height - (1.0 / 40.0 * (height - 30)) - 15;
     ctx.strokeStyle = '#00F0FF';
     ctx.setLineDash([2, 4]);
@@ -383,7 +497,6 @@ document.addEventListener('DOMContentLoaded', () => {
     ctx.fillStyle = '#00F0FF';
     ctx.fillText('TARGET RPI (1.0 ms)', width - 130, targetY - 4);
 
-    // Draw Live Latency Trace (Green Curve)
     ctx.strokeStyle = state.currentLatency > 5.0 ? '#D41B2C' : '#00E676';
     ctx.lineWidth = 2;
     ctx.beginPath();
@@ -391,7 +504,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const step = width / (state.latencyHistory.length - 1);
     for (let i = 0; i < state.latencyHistory.length; i++) {
       const val = state.latencyHistory[i];
-      // Scale val (0ms to 40ms) to canvas height
       const y = height - (Math.min(40, val) / 40.0 * (height - 30)) - 15;
       const x = i * step;
       if (i === 0) {
@@ -402,7 +514,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     ctx.stroke();
 
-    // Draw Current Scan Head Indicator
     const lastX = width - 2;
     const lastY = height - (Math.min(40, state.currentLatency) / 40.0 * (height - 30)) - 15;
     ctx.fillStyle = ctx.strokeStyle;
@@ -413,7 +524,6 @@ document.addEventListener('DOMContentLoaded', () => {
     requestAnimationFrame(drawOscilloscope);
   }
 
-  // Start Animation Loops
   setInterval(updateMetrics, 200);
   requestAnimationFrame(drawOscilloscope);
   setMode('shield');
