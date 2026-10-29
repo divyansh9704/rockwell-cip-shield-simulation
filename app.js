@@ -554,7 +554,6 @@ document.addEventListener('DOMContentLoaded', () => {
   setInterval(updateMetrics, 200);
   requestAnimationFrame(drawOscilloscope);
   setMode('shield');
-}
 
   // 30-Second Guided Demo Tour Implementation
   function stopGuidedDemo() {
