@@ -3,38 +3,41 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Rockwell Automation | CIP-Shield Interactive Industrial Simulation</title>
+  <title>Rockwell Automation | CIP-Shield Real-Time Industrial Simulation</title>
   <link rel="stylesheet" href="styles.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 </head>
 <body>
   <div class="app-container">
-    <!-- TOP NAVIGATION BAR -->
+    <!-- TOP NAVIGATION & BRANDING BAR -->
     <header class="app-header">
       <div class="brand-group">
-        <div class="brand-logo">
+        <div class="brand-logo" title="Rockwell Automation">
           <span class="logo-text">ROK</span>
         </div>
         <div class="brand-details">
-          <h1>CIP-SHIELD <span class="badge">v2.4-PRO</span></h1>
-          <p>Zero-Jitter Hardware-Enclave Edge Proxy for ControlLogix</p>
+          <div class="brand-title-row">
+            <h1>CIP-SHIELD</h1>
+            <span class="badge">v2.5-ENTERPRISE</span>
+          </div>
+          <p class="brand-subtitle">Zero-Jitter Hardware-Enclave Edge Proxy for Allen-Bradley ControlLogix</p>
         </div>
       </div>
       
       <div class="header-controls">
-        <button id="toggleAudioBtn" class="icon-toggle-btn" title="Toggle Industrial Audio FX">
-          <span id="audioIcon">🔇</span> <span class="btn-text">Audio</span>
+        <div class="company-badge-header">
+          <span class="rok-badge">ROCKWELL AUTOMATION PUNE R&D</span>
+          <span class="sys-badge">ControlLogix 5580 • EtherNet/IP CIP Sync (Port 44818)</span>
+        </div>
+
+        <button id="toggleAudioBtn" class="icon-toggle-btn" title="Toggle Industrial Audio Feedback">
+          <span id="audioIcon">🔇</span> <span class="btn-text">Audio FX</span>
         </button>
         <button id="showQrBtn" class="icon-toggle-btn highlight" title="Show Phone QR Code">
           <span>📱</span> <span class="btn-text">Phone QR</span>
         </button>
-        
-        <div class="company-badge-header">
-          <span class="rok-badge">ROCKWELL PUNE R&D ARCHITECTURE</span>
-          <span class="sys-badge">ControlLogix 5580 • EtherNet/IP (Port 44818)</span>
-        </div>
 
         <div class="header-status">
           <div class="pulse-indicator" id="overallStatusDot"></div>
@@ -45,58 +48,105 @@
 
     <!-- ARCHITECTURE MODE SELECTOR (TABS) -->
     <nav class="mode-nav">
-      <button class="mode-tab active" data-mode="shield">
-        <span class="tab-badge green">PROPOSED</span>
+      <button class="mode-tab active" data-mode="shield" id="tabShield">
+        <div class="tab-header-row">
+          <span class="tab-badge green">PROPOSED</span>
+          <span class="tab-metric">0.84ms | &plusmn;0.04ms Jitter</span>
+        </div>
         <span class="tab-title">CIP-Shield Architecture</span>
-        <span class="tab-sub">eBPF + Micro-Crypto (0.84ms Jitter-Free)</span>
+        <span class="tab-sub">eBPF Kernel Fast-Path + Synthetic Keep-Alive</span>
       </button>
-      <button class="mode-tab" data-mode="legacy">
-        <span class="tab-badge red">VULNERABLE</span>
+
+      <button class="mode-tab" data-mode="legacy" id="tabLegacy">
+        <div class="tab-header-row">
+          <span class="tab-badge red">VULNERABLE</span>
+          <span class="tab-metric">0.82ms | Unencrypted</span>
+        </div>
         <span class="tab-title">Legacy Brownfield</span>
-        <span class="tab-sub">Unencrypted CIP (CVE-2024-6242 / DoS)</span>
+        <span class="tab-sub">Plaintext CIP (CVE-2024-6242 Slot Bypass)</span>
       </button>
-      <button class="mode-tab" data-mode="tls">
-        <span class="tab-badge amber">NAIVE FIX</span>
+
+      <button class="mode-tab" data-mode="tls" id="tabTls">
+        <div class="tab-header-row">
+          <span class="tab-badge amber">NAIVE FIX</span>
+          <span class="tab-metric">32.2ms | Watchdog Trip</span>
+        </div>
         <span class="tab-title">Standard TLS Retrofit</span>
-        <span class="tab-sub">Heavy Crypto Spikes (32ms Jitter Halt)</span>
+        <span class="tab-sub">Heavy Crypto Spikes Overload PLC CPU</span>
       </button>
     </nav>
 
-    <!-- REAL-TIME CONTEXTUAL ARCHITECTURE BANNER -->
+    <!-- REAL-TIME ARCHITECTURAL STATE & GUIDED DEMO BANNER -->
     <div class="architecture-banner green" id="archBanner">
-      <div class="banner-icon" id="bannerIcon">🛡️</div>
-      <div class="banner-content">
-        <div class="banner-title" id="bannerTitle">PROPOSED: CIP-Shield Hardware Enclave Active</div>
-        <div class="banner-desc" id="bannerDesc">Linux eBPF kernel fast-path offloads cryptography from the ControlLogix CPU. Packets verified in &le; 13.82&mu;s. Hard determinism maintained with zero packet jitter.</div>
+      <div class="banner-icon-box" id="bannerIconBox">
+        <span class="banner-icon" id="bannerIcon">🛡️</span>
       </div>
-      <button class="guided-demo-btn" id="guidedDemoBtn">
-        <span class="demo-icon" id="demoIcon">▶</span> <span class="demo-text" id="demoText">30s Auto Demo</span>
-      </button>
+      <div class="banner-content">
+        <div class="banner-header-row">
+          <span class="banner-title" id="bannerTitle">PROPOSED: CIP-Shield Hardware Enclave Active</span>
+          <span class="banner-pill" id="bannerPill">LATENCY &le; 13.82&mu;s VERIFIED</span>
+        </div>
+        <div class="banner-desc" id="bannerDesc">
+          Linux eBPF kernel fast-path offloads cryptographic verification from the ControlLogix CPU. Packets verified at driver layer in &le; 13.82&mu;s. Hard determinism maintained with zero packet jitter.
+        </div>
+      </div>
+      <div class="banner-action-area">
+        <button class="guided-demo-btn" id="guidedDemoBtn">
+          <span class="demo-icon" id="demoIcon">▶</span>
+          <span class="demo-text" id="demoText">30s Auto Demo</span>
+        </button>
+      </div>
     </div>
 
+    <!-- PRESENTATION HUD (ACTIVE DURING AUTO DEMO) -->
+    <div class="presentation-hud" id="presentationHud" style="display: none;">
+      <div class="hud-top">
+        <span class="hud-phase-tag" id="hudPhaseTag">PHASE 1 / 3: SYSTEM BASELINE</span>
+        <span class="hud-timer" id="hudTimer">00:25</span>
+      </div>
+      <div class="hud-progress-bar">
+        <div class="hud-progress-fill" id="hudProgressFill" style="width: 0%;"></div>
+      </div>
+      <div class="hud-pitch" id="hudPitch">
+        "Sir/Ma'am, let us observe the legacy ControlLogix brownfield environment running unencrypted on Port 44818..."
+      </div>
+    </div>
 
-    <!-- MAIN DASHBOARD GRID -->
+    <!-- MAIN DASHBOARD SPLIT GRID -->
     <main class="dashboard-grid">
       
-      <!-- LEFT PANEL: INTERACTIVE PHYSICAL & NETWORK TOPOLOGY -->
+      <!-- LEFT PANEL: PHYSICAL & NETWORK TOPOLOGY -->
       <section class="panel topology-panel">
         <div class="panel-header">
-          <h2>1. Real-Time Physical & Network Topology</h2>
+          <div class="panel-title-group">
+            <span class="panel-num">01</span>
+            <h2>Real-Time Physical & Network Topology</h2>
+          </div>
           <div class="panel-actions">
-            <button id="triggerAttackBtn" class="action-btn red-btn">
+            <button id="triggerAttackBtn" class="action-btn red-btn" title="Simulate CVE-2024-6242 Infiltration">
               <span class="btn-icon">⚡</span> Infiltrate CIP Exploit
             </button>
-            <button id="resetSimBtn" class="action-btn gray-btn">
+            <button id="resetSimBtn" class="action-btn gray-btn" title="Reset All States to Nominal">
               <span class="btn-icon">↺</span> Reset
             </button>
           </div>
         </div>
 
-        <!-- ANIMATED NETWORK CANVAS -->
+        <!-- ANIMATED NETWORK STAGE -->
         <div class="topology-stage">
-          <!-- NODE 1: SCADA / FIELD NETWORK -->
+          <!-- NODE 1: SCADA / MES -->
           <div class="topo-node" id="nodeScada">
-            <div class="node-icon">🖥️</div>
+            <div class="scada-screen">
+              <div class="screen-header">
+                <span class="screen-dot"></span>
+                <span class="screen-title">FactoryTalk View</span>
+              </div>
+              <div class="screen-body">
+                <div class="screen-line active"></div>
+                <div class="screen-line"></div>
+                <div class="screen-line"></div>
+              </div>
+            </div>
             <div class="node-label">SCADA / MES</div>
             <div class="node-sub">Port 44818</div>
             <div class="node-badge">EtherNet/IP</div>
@@ -106,11 +156,16 @@
           <div class="packet-channel" id="channel1">
             <div class="channel-line"></div>
             <div class="packet-stream" id="stream1"></div>
+            <div class="channel-label">1GbE Fiber</div>
           </div>
 
-          <!-- NODE 2: CIP-SHIELD PROXY (OR DIRECT PASS) -->
+          <!-- NODE 2: CIP-SHIELD PROXY / GATEWAY -->
           <div class="topo-node" id="nodeShield">
-            <div class="node-icon" id="shieldIcon">🛡️</div>
+            <div class="enclave-chassis">
+              <div class="enclave-badge-led" id="enclaveLed"></div>
+              <div class="enclave-icon" id="shieldIcon">🛡️</div>
+              <div class="enclave-fan"></div>
+            </div>
             <div class="node-label" id="shieldLabel">CIP-Shield Proxy</div>
             <div class="node-sub" id="shieldSub">eBPF Fast-Path</div>
             <div class="node-badge" id="shieldBadge">Active Enclave</div>
@@ -120,179 +175,302 @@
           <div class="packet-channel" id="channel2">
             <div class="channel-line"></div>
             <div class="packet-stream" id="stream2"></div>
+            <div class="channel-label" id="channel2Label">Zero-Copy Ring</div>
           </div>
 
           <!-- NODE 3: ALLEN-BRADLEY CONTROLLOGIX PLC -->
           <div class="topo-node" id="nodePlc">
-            <div class="plc-faceplate">
-              <div class="plc-brand">Allen-Bradley</div>
-              <div class="plc-model">ControlLogix 5580</div>
-              <div class="plc-leds">
-                <div class="led-item"><span class="led-light green" id="ledRun"></span> RUN</div>
-                <div class="led-item"><span class="led-light off" id="ledFault"></span> FAULT</div>
-                <div class="led-item"><span class="led-light green" id="ledIo"></span> I/O OK</div>
+            <div class="plc-chassis">
+              <div class="plc-header">
+                <span class="ab-logo">Allen-Bradley</span>
+                <span class="plc-model">5580</span>
+              </div>
+              <!-- 4 CHASSIS SLOTS -->
+              <div class="chassis-slots">
+                <div class="slot slot-cpu" title="Slot 0: CPU Controller">
+                  <span class="slot-lbl">CPU</span>
+                  <div class="slot-led" id="ledRun"></div>
+                </div>
+                <div class="slot slot-fault" title="Slot 1: Safety & Watchdog">
+                  <span class="slot-lbl">FLT</span>
+                  <div class="slot-led" id="ledFault"></div>
+                </div>
+                <div class="slot slot-net" title="Slot 2: 1756-EN4TR EtherNet/IP">
+                  <span class="slot-lbl">NET</span>
+                  <div class="slot-led" id="ledIo"></div>
+                </div>
+                <div class="slot slot-io" title="Slot 3: Digital Motion I/O">
+                  <span class="slot-lbl">I/O</span>
+                  <div class="slot-led" id="ledMotion"></div>
+                </div>
               </div>
             </div>
+            <div class="node-label">ControlLogix</div>
+            <div class="node-sub" id="plcSub">1756-L85E</div>
           </div>
 
           <!-- CONNECTOR 3 -->
           <div class="packet-channel" id="channel3">
             <div class="channel-line"></div>
             <div class="packet-stream" id="stream3"></div>
+            <div class="channel-label">Backplane CIP</div>
           </div>
 
           <!-- NODE 4: ROBOTIC ASSEMBLY & CONVEYOR -->
           <div class="topo-node" id="nodeFactory">
-            <div class="factory-graphic">
-              <div class="robotic-arm" id="robotArm">
-                <div class="arm-base"></div>
-                <div class="arm-joint"></div>
-                <div class="arm-gripper"></div>
+            <div class="factory-workstation" id="factoryWorkstation">
+              <div class="strobe-beacon" id="strobeBeacon"></div>
+              
+              <!-- ARTICULATED INDUSTRIAL ROBOT ARM -->
+              <div class="robotic-rig" id="robotArm">
+                <div class="robot-pedestal"></div>
+                <div class="robot-bicep"></div>
+                <div class="robot-forearm"></div>
+                <div class="robot-end-effector">
+                  <div class="laser-spot" id="laserSpot"></div>
+                </div>
               </div>
-              <div class="conveyor-belt" id="conveyorBelt">
-                <div class="conveyor-track"></div>
-                <div class="cargo cargo1"></div>
-                <div class="cargo cargo2"></div>
-                <div class="cargo cargo3"></div>
+
+              <!-- HEAVY CONVEYOR BELT -->
+              <div class="conveyor-assembly">
+                <div class="conveyor-rollers">
+                  <span class="roller"></span>
+                  <span class="roller"></span>
+                  <span class="roller"></span>
+                  <span class="roller"></span>
+                </div>
+                <div class="conveyor-belt-track" id="conveyorTrack">
+                  <div class="part-cargo part-1"></div>
+                  <div class="part-cargo part-2"></div>
+                  <div class="part-cargo part-3"></div>
+                </div>
               </div>
             </div>
             <div class="node-label">Assembly Cell 04</div>
-            <div class="node-sub" id="lineSpeed">Output: 120 Units/min</div>
+            <div class="node-sub" id="lineSpeed">Output: 450 Units/min</div>
           </div>
         </div>
 
-        <!-- CIP PACKET DEEP INSPECTOR -->
+        <!-- INTERACTIVE CIP PACKET DEEP INSPECTOR -->
         <div class="packet-inspector">
           <div class="inspector-header">
-            <span>CIP ENCAPSULATION FRAME INSPECTOR</span>
-            <span class="frame-tag" id="frameStatus">STATUS: 0x0000 (SUCCESS)</span>
+            <div class="insp-title">
+              <span class="insp-icon">🔍</span>
+              <span>CIP ENCAPSULATION FRAME INSPECTOR</span>
+            </div>
+            <span class="frame-tag" id="frameStatus">STATUS: 0x0000 (VALIDATED)</span>
           </div>
-          <div class="inspector-body">
+
+          <!-- INTERACTIVE HEX DUMP (TAP/HOVER TO INSPECT) -->
+          <div class="hex-dump-container">
             <div class="hex-grid" id="hexView">
-              <span class="byte">6F</span><span class="byte">00</span><span class="byte">18</span><span class="byte">00</span>
-              <span class="byte">A4</span><span class="byte">12</span><span class="byte">B8</span><span class="byte">00</span>
-              <span class="byte highlight" id="serviceByte">4E</span><span class="byte">02</span><span class="byte">20</span><span class="byte">67</span>
-              <span class="byte">24</span><span class="byte">01</span><span class="byte">00</span><span class="byte">00</span>
+              <span class="byte" data-offset="0x00" data-field="Command: SendRRData (0x006F)">6F</span>
+              <span class="byte" data-offset="0x01" data-field="Command: SendRRData (High Byte)">00</span>
+              <span class="byte" data-offset="0x02" data-field="Length: 24 Bytes Payload">18</span>
+              <span class="byte" data-offset="0x03" data-field="Length: High Byte">00</span>
+              <span class="byte" data-offset="0x04" data-field="Session Handle: Active Connection">A4</span>
+              <span class="byte" data-offset="0x05" data-field="Session Handle Byte 2">12</span>
+              <span class="byte" data-offset="0x06" data-field="Session Handle Byte 3">B8</span>
+              <span class="byte" data-offset="0x07" data-field="Session Handle Byte 4">00</span>
+              <span class="byte highlight" id="serviceByte" data-offset="0x08" data-field="CIP Service: Forward_Open (0x4E)">4E</span>
+              <span class="byte" id="slotByte" data-offset="0x09" data-field="Target Path: Backplane Slot 0x02">02</span>
+              <span class="byte" data-offset="0x0A" data-field="Class: Connection Manager (0x06)">20</span>
+              <span class="byte" data-offset="0x0B" data-field="Instance: 0x01">67</span>
+              <span class="byte" data-offset="0x0C" data-field="Timeout Ticks: 250ms">24</span>
+              <span class="byte" data-offset="0x0D" data-field="Priority: Scheduled Deterministic">01</span>
+              <span class="byte" data-offset="0x0E" data-field="Poly1305 Auth Tag Valid">00</span>
+              <span class="byte" data-offset="0x0F" data-field="Zero-Jitter Sequence 0x00">00</span>
             </div>
-            <div class="frame-desc" id="frameDesc">
-              <strong>Command:</strong> SendRRData (0x006F) | <strong>CIP Service:</strong> Forward Open (0x4E) | <strong>Target Slot:</strong> 0x02 | <strong>Security Tag:</strong> Poly1305 Valid
+            <div class="byte-live-explainer" id="byteExplainer">
+              <span class="byte-pill" id="byteOffsetPill">OFFSET 0x08</span>
+              <span class="byte-meaning" id="byteMeaning"><strong>Field:</strong> CIP Service Code <code>0x4E (Forward_Open)</code> — Initiates high-speed cyclic I/O connection.</span>
             </div>
+          </div>
+          <div class="frame-desc" id="frameDesc">
+            <strong>Active Encapsulation:</strong> SendRRData (0x006F) | <strong>Service:</strong> Forward Open (0x4E) | <strong>Target Slot:</strong> 0x02 | <strong>Cryptographic Tag:</strong> Poly1305 Valid
           </div>
         </div>
 
-        <!-- SYSTEM EVENT LOG -->
+        <!-- DIAGNOSTIC EVENT BUS (SYSLOG) -->
         <div class="event-terminal">
           <div class="terminal-bar">
-            <span>DIAGNOSTIC EVENT BUS (SYSLOG)</span>
-            <span class="live-tag">LIVE STREAM</span>
+            <div class="term-left">
+              <span class="term-icon">📟</span>
+              <span>DIAGNOSTIC EVENT BUS (SYSLOG)</span>
+            </div>
+            <div class="term-right">
+              <span class="filter-tag">PORT 44818</span>
+              <span class="live-tag">LIVE STREAM</span>
+            </div>
           </div>
           <div class="terminal-body" id="syslogConsole">
             <div class="log-line info">[INIT] CIP-Shield daemon initialized on 1756-EN4TR gateway.</div>
             <div class="log-line success">[CIP-SYNC] IEEE 1588 PTP master clock synchronized. Jitter: 0.04ms.</div>
-            <div class="log-line info">[RPI] Cyclic I/O stream active (RPI = 1.00ms). Conveyor at 100% nominal speed.</div>
+            <div class="log-line info">[RPI] Cyclic I/O stream active (RPI = 1.00ms). Conveyor at 100% nominal speed (450 units/min).</div>
           </div>
         </div>
       </section>
 
-      <!-- RIGHT PANEL: REAL-TIME TELEMETRY & OSCILLOSCOPE -->
+      <!-- RIGHT PANEL: DETERMINISTIC TELEMETRY & OSCILLOSCOPE -->
       <section class="panel telemetry-panel">
         <div class="panel-header">
-          <h2>2. Deterministic Telemetry & Latency Oscilloscope</h2>
+          <div class="panel-title-group">
+            <span class="panel-num">02</span>
+            <h2>Deterministic Telemetry & Latency Oscilloscope</h2>
+          </div>
           <span class="telemetry-badge" id="telemetryBadge">RPI: 1.0ms TARGET</span>
         </div>
 
-        <!-- KEY METRICS ROW -->
+        <!-- 4 CORE INDUSTRIAL METRICS -->
         <div class="metrics-grid">
-          <div class="metric-card">
-            <div class="metric-title">CYCLIC LATENCY</div>
+          <!-- METRIC 1: CYCLIC LATENCY -->
+          <div class="metric-card" id="cardLatency">
+            <div class="metric-card-top">
+              <span class="metric-title">CYCLIC LATENCY</span>
+              <span class="metric-status-dot green" id="dotLatency"></span>
+            </div>
             <div class="metric-val" id="metricLatency">0.84 <span class="unit">ms</span></div>
             <div class="metric-sub" id="latencySub">Deterministic Target &lt; 2.0ms</div>
+            <div class="metric-sparkline" id="sparkLatency"></div>
           </div>
 
-          <div class="metric-card">
-            <div class="metric-title">CYCLIC JITTER</div>
+          <!-- METRIC 2: CYCLIC JITTER -->
+          <div class="metric-card" id="cardJitter">
+            <div class="metric-card-top">
+              <span class="metric-title">CYCLIC JITTER (&Delta;T)</span>
+              <span class="metric-status-dot green" id="dotJitter"></span>
+            </div>
             <div class="metric-val" id="metricJitter">&plusmn;0.04 <span class="unit">ms</span></div>
             <div class="metric-sub" id="jitterSub">Watchdog Trip at &gt; 5.0ms</div>
+            <div class="metric-sparkline" id="sparkJitter"></div>
           </div>
 
-          <div class="metric-card">
-            <div class="metric-title">PLC CPU LOAD</div>
+          <!-- METRIC 3: PLC CPU LOAD -->
+          <div class="metric-card" id="cardCpu">
+            <div class="metric-card-top">
+              <span class="metric-title">CONTROLLOGIX CPU LOAD</span>
+              <span class="metric-status-dot green" id="dotCpu"></span>
+            </div>
             <div class="metric-val" id="metricCpu">24 <span class="unit">%</span></div>
-            <div class="metric-bar-bg"><div class="metric-bar-fill" id="cpuBar" style="width: 24%;"></div></div>
+            <div class="metric-bar-bg">
+              <div class="metric-bar-fill" id="cpuBar" style="width: 24%;"></div>
+            </div>
+            <div class="metric-sub" id="cpuSub">Ladder Logic + I/O Scan Time</div>
           </div>
 
-          <div class="metric-card">
-            <div class="metric-title">PLANT DOWNTIME LOSS</div>
+          <!-- METRIC 4: PLANT DOWNTIME LOSS -->
+          <div class="metric-card" id="cardLoss">
+            <div class="metric-card-top">
+              <span class="metric-title">PLANT DOWNTIME LOSS</span>
+              <span class="metric-status-dot green" id="dotLoss"></span>
+            </div>
             <div class="metric-val loss-text" id="metricLoss">$0.00</div>
-            <div class="metric-sub" id="lossSub">Estimated $4,333 / min</div>
+            <div class="metric-sub" id="lossSub">Estimated $4,333 / min ($260K/hr)</div>
+            <div class="metric-sparkline" id="sparkLoss"></div>
           </div>
         </div>
 
-        <!-- OSCILLOSCOPE GRAPH -->
+        <!-- AUTHENTIC INDUSTRIAL OSCILLOSCOPE -->
         <div class="chart-container">
           <div class="chart-header">
-            <span>PACKET LATENCY OSCILLOSCOPE (LAST 50 CYCLES)</span>
+            <div class="osc-title">
+              <span class="scope-icon">📈</span>
+              <span>PACKET LATENCY OSCILLOSCOPE (LAST 50 CYCLES)</span>
+            </div>
             <div class="chart-legend">
-              <span class="legend-box green"></span> Actual Latency
-              <span class="legend-box red"></span> Watchdog Limit (5.0ms)
+              <span class="legend-item"><span class="legend-box green"></span> Actual Latency</span>
+              <span class="legend-item"><span class="legend-box red-line"></span> Watchdog Limit (5.0ms)</span>
+              <span class="legend-item"><span class="legend-box cyan-line"></span> Target RPI (1.0ms)</span>
             </div>
           </div>
-          <canvas id="oscilloscopeCanvas" width="600" height="180"></canvas>
+          <div class="canvas-wrapper">
+            <canvas id="oscilloscopeCanvas" width="600" height="190"></canvas>
+            <div class="scope-graticule-labels">
+              <span class="scope-label" style="top: 8%;">40ms</span>
+              <span class="scope-label" style="top: 25%;">30ms</span>
+              <span class="scope-label" style="top: 50%;">20ms</span>
+              <span class="scope-label red" style="top: 75%;">5.0ms [TRIP]</span>
+              <span class="scope-label green" style="top: 88%;">1.0ms [RPI]</span>
+            </div>
+          </div>
+          <div class="scope-footer-bar">
+            <span>TIMEBASE: 1.0 ms / div</span>
+            <span>BANDWIDTH: 100 Mbps (1756-EN4TR)</span>
+            <span id="scopeTrigger">TRIGGER: AUTO (CYCLIC)</span>
+          </div>
         </div>
 
-        <!-- INTERVIEW EXPLAINER BUTTON -->
+        <!-- CANDIDATE INTERVIEW EXPLAINER BUTTON -->
         <div class="explainer-section">
           <button id="openInterviewHelpBtn" class="explainer-btn">
-            💡 Tap to View "How to Explain this to Rockwell Interviewers"
+            <span class="explainer-icon">💡</span>
+            <span class="explainer-text">Tap to View "How to Explain this to Rockwell Interviewers"</span>
           </button>
         </div>
       </section>
 
     </main>
 
-    <!-- EXPLAINER MODAL FOR PHONE / INTERVIEW DISCUSSION -->
+    <!-- EXPLAINER MODAL FOR INTERVIEW PRESENTATION -->
     <div class="modal-backdrop" id="explainerModal">
       <div class="modal-card">
         <div class="modal-header">
-          <h3>🎙️ Candidate Interview Pitch: Project CIP-Shield</h3>
+          <div class="modal-title-row">
+            <span class="modal-icon">🎙️</span>
+            <h3>Candidate Interview Pitch: Project CIP-Shield</h3>
+          </div>
           <button class="modal-close-btn" id="closeModalBtn">&times;</button>
         </div>
         <div class="modal-body">
-          <h4>1. How to State the Problem (30-Second Hook)</h4>
-          <p><em>"Sir/Ma'am, across over 75% of global factories running Rockwell ControlLogix PLCs, plant managers face the <strong>Deterministic Security Dilemma</strong>. When you enable standard CIP Security with TLS encryption on legacy controllers, the CPU overhead spikes latency to 30ms. That breaches the 1ms cyclic Requested Packet Interval (RPI), tripping the watchdog and shutting down the production line. To keep the factory running, operators disable encryption—leaving the plant vulnerable to CVE-2024-6242 slot bypass and CVE-2026-9637 DoS attacks."</em></p>
+          <div class="pitch-card">
+            <h4>1. How to State the Problem (30-Second Hook)</h4>
+            <p><em>"Sir/Ma'am, across over 75% of global factories running Rockwell ControlLogix PLCs, plant managers face the <strong>Deterministic Security Dilemma</strong>. When you enable standard CIP Security with TLS encryption on legacy controllers, the CPU overhead spikes latency to 32ms. That breaches the 1.0ms cyclic Requested Packet Interval (RPI), tripping the 5.0ms hardware watchdog and shutting down the production line. To keep the factory running, operators disable encryption—leaving the plant vulnerable to CVE-2024-6242 slot bypass and CVE-2026-9637 DoS attacks."</em></p>
+          </div>
 
-          <h4>2. How to Explain Your CIP-Shield Solution</h4>
-          <p><em>"My proposed solution is <strong>CIP-Shield</strong>—an inline edge micro-proxy using <strong>Linux eBPF (Extended Berkeley Packet Filter)</strong> and hardware-accelerated ChaCha20-Poly1305 micro-tagging. It offloads all cryptographic inspection from the PLC. When an exploit packet is intercepted, our <strong>Synthetic Keep-Alive Synthesizer</strong> quarantees the threat and immediately feeds a valid synthetic status beacon to the PLC backplane. The assembly line keeps running at 100% throughput with zero jitter, while an encrypted alert is pushed to FactoryTalk DataMosaix."</em></p>
+          <div class="pitch-card">
+            <h4>2. How to Explain Your CIP-Shield Solution</h4>
+            <p><em>"My proposed solution is <strong>CIP-Shield</strong>—an inline edge micro-proxy using <strong>Linux eBPF (Extended Berkeley Packet Filter)</strong> and hardware-accelerated ChaCha20-Poly1305 micro-tagging. It offloads all cryptographic inspection from the PLC. When an exploit packet is intercepted, our <strong>Synthetic Keep-Alive Synthesizer</strong> isolates the threat and immediately feeds a valid synthetic status beacon to the PLC backplane. The assembly line keeps running at 100% throughput with zero jitter, while an encrypted alert is pushed to FactoryTalk DataMosaix."</em></p>
+          </div>
 
-          <h4>3. Business Impact to State</h4>
-          <p><em>"This avoids $2.6 Million per year in unplanned downtime per automotive plant and extends the life of Rockwell's massive brownfield installed base without requiring a multi-million-dollar chassis rip-and-replace."</em></p>
+          <div class="pitch-card">
+            <h4>3. Business Impact to State</h4>
+            <p><em>"This avoids <strong>$2.6 Million per year</strong> in unplanned downtime per automotive plant ($4,333/min) and extends the operational life of Rockwell's massive brownfield installed base without requiring a multi-million-dollar chassis rip-and-replace."</em></p>
+          </div>
         </div>
       </div>
     </div>
 
-    <!-- QR CODE MODAL -->
+    <!-- QR CODE MODAL FOR MOBILE MIRRORING -->
     <div class="modal-backdrop" id="qrModal">
-      <div class="modal-card" style="text-align: center; max-width: 400px;">
+      <div class="modal-card qr-card">
         <div class="modal-header">
-          <h3>📱 Scan to Open on Your Smartphone</h3>
+          <div class="modal-title-row">
+            <span class="modal-icon">📱</span>
+            <h3>Scan to Open on Your Smartphone</h3>
+          </div>
           <button class="modal-close-btn" id="closeQrModalBtn">&times;</button>
         </div>
-        <div class="modal-body">
-          <img src="qr_code.png" alt="Scan QR code" style="width: 220px; height: 220px; border-radius: 6px; margin: 10px auto; display: block; border: 2px solid var(--border-color);">
-          <p style="font-size: 11px; color: var(--text-muted); margin-top: 8px;">
+        <div class="modal-body qr-body">
+          <img src="qr_code.png" alt="Scan QR code" class="qr-img">
+          <p class="qr-instruction">
             Point your smartphone camera to launch this live simulation in Safari or Chrome.
           </p>
-          <p style="font-family: var(--font-mono); font-size: 10.5px; color: var(--cyan-accent); word-break: break-all; margin-top: 6px;">
+          <div class="qr-link-box">
             https://divyansh9704.github.io/rockwell-cip-shield-simulation/
-          </p>
+          </div>
         </div>
       </div>
     </div>
 
-    <!-- FOOTER -->
+    <!-- ENTERPRISE FOOTER -->
     <footer class="app-footer">
-      <span>Rockwell Automation Campus Recruitment 2026/2027 • Candidate Innovation Project</span>
-      <span>Hinjewadi Pune R&D Center Dossier</span>
+      <div class="footer-left">
+        <span class="footer-brand">Rockwell Automation Campus Recruitment 2026/2027</span>
+        <span class="footer-role">Graduate Engineer Trainee (GET - IT) Candidate Dossier</span>
+      </div>
+      <div class="footer-right">
+        <span>Hinjewadi Phase 2, Pune Software Technology Center (STC)</span>
+      </div>
     </footer>
   </div>
 
