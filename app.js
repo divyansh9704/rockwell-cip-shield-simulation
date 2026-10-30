@@ -1,311 +1,279 @@
 // ==========================================================================
-// ROCKWELL AUTOMATION CIP-SHIELD ENTERPRISE SIMULATION ENGINE v2.5
+// ROCKWELL AUTOMATION CYBER-PHYSICAL INDUSTRIAL SUITE v3.0
 // Designed for Hinjewadi Pune Software Technology Center (STC) Recruitment
 // ==========================================================================
 
 document.addEventListener('DOMContentLoaded', () => {
-  // Application State
+  // ==================== STATE MANAGEMENT ====================
   const state = {
-    mode: 'shield', // 'shield' | 'legacy' | 'tls'
+    currentSuite: 'motion', // 'motion' | 'trust' | 'dos' | 'pitch'
+    motionMode: 'shield',   // 'shield' | 'legacy' | 'tls'
     isUnderAttack: false,
-    attackQuarantined: false,
+    factoryRunning: true,
     downtimeSeconds: 0,
     downtimeTimer: null,
-    latencyHistory: new Array(50).fill(0.84),
+    
+    // Telemetry
+    latencyHistory: new Array(60).fill(0.84),
     currentLatency: 0.84,
     currentJitter: 0.04,
     currentCpu: 24,
-    soundEnabled: false,
+    
+    // Audio FX
+    audioEnabled: false,
     audioCtx: null,
-    demoInterval: null,
-    demoElapsed: 0
+    
+    // Digital Twin Kinematics & Particles
+    robotAngle: 0,
+    weldSparks: [],
+    conveyorOffset: 0,
+    dotMatrixIndex: 0,
+    dotMatrixStrings: ['RUN ', 'OK  ', 'L85E', '1.0m', 'SYNC', '4481'],
+    
+    // Trust Gap Suite
+    isTampered: false,
+    pipelineRunning: false,
+
+    // Auto Pitch Tour
+    tourActive: false,
+    tourTimer: null,
+    tourStep: 0
   };
 
-  // DOM Elements
-  const modeTabs = document.querySelectorAll('.mode-tab');
-  const triggerAttackBtn = document.getElementById('triggerAttackBtn');
-  const resetSimBtn = document.getElementById('resetSimBtn');
-  const openModalBtn = document.getElementById('openInterviewHelpBtn');
-  const closeModalBtn = document.getElementById('closeModalBtn');
-  const explainerModal = document.getElementById('explainerModal');
+  // ==================== DOM ELEMENTS ====================
+  // Suite Tabs
+  const domainTabs = document.querySelectorAll('.domain-tab');
+  const suiteViews = {
+    motion: document.getElementById('viewSuiteMotion'),
+    trust: document.getElementById('viewSuiteTrust'),
+    dos: document.getElementById('viewSuiteDos'),
+    pitch: document.getElementById('viewSuitePitch')
+  };
 
-  // QR Modal Elements
+  // Header
+  const overallDot = document.getElementById('overallDot');
+  const overallStatusText = document.getElementById('overallStatusText');
+  const toggleAudioBtn = document.getElementById('toggleAudioBtn');
   const showQrBtn = document.getElementById('showQrBtn');
   const qrModal = document.getElementById('qrModal');
   const closeQrModalBtn = document.getElementById('closeQrModalBtn');
+  const autoTourBtn = document.getElementById('autoTourBtn');
 
-  // Audio Toggle
-  const toggleAudioBtn = document.getElementById('toggleAudioBtn');
-  const audioIcon = document.getElementById('audioIcon');
+  // Candidate Verbal HUD
+  const hudPhaseIndicator = document.getElementById('hudPhaseIndicator');
+  const hudScriptText = document.getElementById('hudScriptText');
 
-  // Architecture Banner & Guided Demo DOM
-  const archBanner = document.getElementById('archBanner');
-  const bannerIcon = document.getElementById('bannerIcon');
-  const bannerTitle = document.getElementById('bannerTitle');
-  const bannerDesc = document.getElementById('bannerDesc');
-  const bannerPill = document.getElementById('bannerPill');
-  const guidedDemoBtn = document.getElementById('guidedDemoBtn');
-  const demoIcon = document.getElementById('demoIcon');
-  const demoText = document.getElementById('demoText');
-
-  // Presentation HUD DOM
-  const presentationHud = document.getElementById('presentationHud');
-  const hudPhaseTag = document.getElementById('hudPhaseTag');
-  const hudTimer = document.getElementById('hudTimer');
-  const hudProgressFill = document.getElementById('hudProgressFill');
-  const hudPitch = document.getElementById('hudPitch');
-
-  // Status & Metrics DOM
-  const overallDot = document.getElementById('overallStatusDot');
-  const overallText = document.getElementById('overallStatusText');
-  const metricLatency = document.getElementById('metricLatency');
-  const metricJitter = document.getElementById('metricJitter');
-  const metricCpu = document.getElementById('metricCpu');
-  const cpuBar = document.getElementById('cpuBar');
-  const metricLoss = document.getElementById('metricLoss');
-  const syslogConsole = document.getElementById('syslogConsole');
-
-  // Metric status dots
+  // Suite 1 Elements (Motion & Jitter)
+  const archButtons = document.querySelectorAll('.arch-btn');
+  const infiltrateAttackBtn = document.getElementById('infiltrateAttackBtn');
+  const resetMotionSimBtn = document.getElementById('resetMotionSimBtn');
+  const twinCanvas = document.getElementById('digitalTwinCanvas');
+  const twinCtx = twinCanvas.getContext('2d');
+  const scopeCanvas = document.getElementById('scopeCanvas');
+  const scopeCtx = scopeCanvas.getContext('2d');
+  
+  // Suite 1 Metrics
+  const valLatency = document.getElementById('valLatency');
+  const subLatency = document.getElementById('subLatency');
+  const barLatency = document.getElementById('barLatency');
   const dotLatency = document.getElementById('dotLatency');
+
+  const valJitter = document.getElementById('valJitter');
+  const subJitter = document.getElementById('subJitter');
+  const barJitter = document.getElementById('barJitter');
   const dotJitter = document.getElementById('dotJitter');
+
+  const valCpu = document.getElementById('valCpu');
+  const subCpu = document.getElementById('subCpu');
+  const barCpu = document.getElementById('barCpu');
   const dotCpu = document.getElementById('dotCpu');
+
+  const valLoss = document.getElementById('valLoss');
+  const barLoss = document.getElementById('barLoss');
   const dotLoss = document.getElementById('dotLoss');
 
-  // Packet Inspector DOM
-  const frameStatus = document.getElementById('frameStatus');
-  const serviceByte = document.getElementById('serviceByte');
-  const slotByte = document.getElementById('slotByte');
-  const frameDesc = document.getElementById('frameDesc');
-  const byteOffsetPill = document.getElementById('byteOffsetPill');
-  const byteMeaning = document.getElementById('byteMeaning');
-  const hexBytes = document.querySelectorAll('.hex-grid .byte');
+  const cellStatusPill = document.getElementById('cellStatusPill');
+  const hwPlcModel = document.getElementById('hwPlcModel');
+  const hwPtpSync = document.getElementById('hwPtpSync');
+  const hwRobotStatus = document.getElementById('hwRobotStatus');
+  const hexStream = document.getElementById('hexStream');
+  const syslogTerminal = document.getElementById('syslogTerminal');
+  const tagCryptoStatus = document.getElementById('tagCryptoStatus');
+  const packetCrcBadge = document.getElementById('packetCrcBadge');
 
-  // Topology DOM
-  const nodeShield = document.getElementById('nodeShield');
-  const shieldIcon = document.getElementById('shieldIcon');
-  const shieldLabel = document.getElementById('shieldLabel');
-  const shieldSub = document.getElementById('shieldSub');
-  const shieldBadge = document.getElementById('shieldBadge');
-  const enclaveLed = document.getElementById('enclaveLed');
-  const ledRun = document.getElementById('ledRun');
-  const ledFault = document.getElementById('ledFault');
-  const ledIo = document.getElementById('ledIo');
-  const ledMotion = document.getElementById('ledMotion');
-  const factoryWorkstation = document.getElementById('factoryWorkstation');
-  const strobeBeacon = document.getElementById('strobeBeacon');
-  const lineSpeed = document.getElementById('lineSpeed');
+  // Suite 2 Elements (Trust Gap)
+  const tamperToggle = document.getElementById('tamperToggle');
+  const runPipelineBtn = document.getElementById('runPipelineBtn');
+  const pipelineConsole = document.getElementById('pipelineConsole');
+  const pipelineStatusBadge = document.getElementById('pipelineStatusBadge');
+  const trustNodeWorkstation = document.getElementById('trustNodeWorkstation');
+  const trustNodeController = document.getElementById('trustNodeController');
+  const trustNodeHmi = document.getElementById('trustNodeHmi');
+  const statusWorkstation = document.getElementById('statusWorkstation');
+  const acdFileName = document.getElementById('acdFileName');
+  const acdFileHash = document.getElementById('acdFileHash');
+  const statusPlcLogic = document.getElementById('statusPlcLogic');
+  const rung1Code = document.getElementById('rung1Code');
+  const rung1Flag = document.getElementById('rung1Flag');
+  const rung2Code = document.getElementById('rung2Code');
+  const rung2Flag = document.getElementById('rung2Flag');
+  const rung3Code = document.getElementById('rung3Code');
+  const rung3Flag = document.getElementById('rung3Flag');
+  const statusHmi = document.getElementById('statusHmi');
+  const hmiGreenLight = document.getElementById('hmiGreenLight');
+  const hmiEstop = document.getElementById('hmiEstop');
+  const hmiSafety = document.getElementById('hmiSafety');
+  const pSteps = [1, 2, 3, 4, 5, 6].map(i => document.getElementById(`pStep${i}`));
 
-  const stream1 = document.getElementById('stream1');
-  const stream2 = document.getElementById('stream2');
-  const stream3 = document.getElementById('stream3');
+  // Suite 3 Elements (DoS)
+  const sendMalformedCipBtn = document.getElementById('sendMalformedCipBtn');
+  const recoverControllerBtn = document.getElementById('recoverControllerBtn');
+  const dosReadoutBox = document.getElementById('dosReadoutBox');
 
-  // Oscilloscope Canvas
-  const canvas = document.getElementById('oscilloscopeCanvas');
-  const ctx = canvas.getContext('2d');
+  // ==================== 1. SUITE SWITCHING ====================
+  function switchSuite(suiteName) {
+    state.currentSuite = suiteName;
+    domainTabs.forEach(tab => {
+      tab.classList.toggle('active', tab.dataset.suite === suiteName);
+    });
+    Object.keys(suiteViews).forEach(key => {
+      suiteViews[key].classList.toggle('active', key === suiteName);
+    });
 
-  // ==================== 1. WEB AUDIO API SYNTHESIZER ====================
-  function initAudio() {
-    if (!state.audioCtx) {
-      const AudioContext = window.AudioContext || window.webkitAudioContext;
-      state.audioCtx = new AudioContext();
+    updateCandidateHud();
+  }
+
+  domainTabs.forEach(tab => {
+    tab.addEventListener('click', () => switchSuite(tab.dataset.suite));
+  });
+
+  // Candidate Verbal Scripts per Suite/Mode
+  function updateCandidateHud() {
+    if (state.currentSuite === 'motion') {
+      if (state.motionMode === 'shield') {
+        hudPhaseIndicator.textContent = 'SUITE 1 • PROPOSED CIP-SHIELD (HARD DETERMINISM)';
+        hudScriptText.innerHTML = `"Sir/Ma'am, in heavy manufacturing running ControlLogix 5580 controllers, high-speed robotic motion requires packet delivery in <strong>under 1.0 millisecond</strong>. Our proposed <strong>CIP-Shield architecture</strong> uses Linux eBPF kernel offloading to inspect Poly1305 MAC tags in <strong>13.82 microseconds</strong>. This provides Zero-Trust crypto with zero jitter, keeping the assembly line running at 100% capacity."`;
+      } else if (state.motionMode === 'legacy') {
+        hudPhaseIndicator.textContent = 'SUITE 1 • LEGACY BROWNFIELD (CVE-2024-6242 VULNERABLE)';
+        hudScriptText.innerHTML = `"Notice the legacy brownfield scenario: to maintain the 1ms motion limit, plants run unencrypted CIP on Port 44818. This leaves the backplane vulnerable to <strong>CVE-2024-6242</strong>, allowing an attacker to bypass slot permissions and overwrite servo velocity tags directly."`;
+      } else if (state.motionMode === 'tls') {
+        hudPhaseIndicator.textContent = 'SUITE 1 • NAIVE TLS RETROFIT (WATCHDOG TRIP)';
+        hudScriptText.innerHTML = `"Here is the real dilemma: when operators try the naive fix of enabling standard TLS, the heavy crypto handshake spikes latency to <strong>32 milliseconds</strong>. That breaches the 5.0ms hardware watchdog limit, tripping the E-Stop and costing the plant <strong>$4,333 every single minute</strong> in unplanned downtime."`;
+      }
+    } else if (state.currentSuite === 'trust') {
+      hudPhaseIndicator.textContent = 'SUITE 2 • LOGIC TRUST GAP (CISA AA26-097A)';
+      hudScriptText.innerHTML = `"Moving to the software plane, CISA advisory AA26-097A revealed that adversaries modify Studio 5000 <code>.ACD</code> project files directly, disabling emergency shutdown rungs while the HMI still shows normal. Today, CISA recommends a manual visual comparison. My proposal introduces a <strong>Signed Baseline Pipeline</strong> that gates downloads and uses canonical L5X diffing to prove runtime integrity."`;
+    } else if (state.currentSuite === 'dos') {
+      hudPhaseIndicator.textContent = 'SUITE 3 • CIP INPUT VALIDATION FAULT (CVE-2026-9637)';
+      hudScriptText.innerHTML = `"It is vital to distinguish between logic tampering and availability bugs: <strong>CVE-2026-9637</strong> is an input length validation flaw that triggers a Major Nonrecoverable Fault. The fix here is straightforward firmware upgrading (v36.013+), whereas project tampering requires supply chain manifest signing."`;
+    } else if (state.currentSuite === 'pitch') {
+      hudPhaseIndicator.textContent = 'SUITE 4 • EXECUTIVE SUMMARY & ROI';
+      hudScriptText.innerHTML = `"In summary, this dual architecture bridges both planes: eBPF solves the real-time motion physics at the network layer, while Signed Baselines solve the supply chain trust gap in software engineering. This saves $2.6 Million per plant annually without requiring multi-million-dollar hardware rip-and-replace."`;
     }
   }
 
-  function playTone(freq, type, duration, vol = 0.1) {
-    if (!state.soundEnabled || !state.audioCtx) return;
+  // ==================== 2. WEB AUDIO SYNTHESIZER ====================
+  function initAudio() {
+    if (!state.audioCtx) {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      state.audioCtx = new AudioCtx();
+    }
+    if (state.audioCtx.state === 'suspended') {
+      state.audioCtx.resume();
+    }
+  }
+
+  toggleAudioBtn.addEventListener('click', () => {
+    state.audioEnabled = !state.audioEnabled;
+    toggleAudioBtn.classList.toggle('highlight', state.audioEnabled);
+    if (state.audioEnabled) {
+      initAudio();
+      playTone(520, 0.1, 'sine');
+    }
+  });
+
+  function playTone(freq, duration, type = 'sine', gainVal = 0.08) {
+    if (!state.audioEnabled || !state.audioCtx) return;
     try {
       const osc = state.audioCtx.createOscillator();
       const gain = state.audioCtx.createGain();
       osc.type = type;
       osc.frequency.setValueAtTime(freq, state.audioCtx.currentTime);
-      gain.gain.setValueAtTime(vol, state.audioCtx.currentTime);
+      gain.gain.setValueAtTime(gainVal, state.audioCtx.currentTime);
       gain.gain.exponentialRampToValueAtTime(0.001, state.audioCtx.currentTime + duration);
       osc.connect(gain);
       gain.connect(state.audioCtx.destination);
       osc.start();
       osc.stop(state.audioCtx.currentTime + duration);
-    } catch (e) {
-      // Audio autoplay policy fallback
-    }
+    } catch (e) {}
   }
 
-  function playClick() { playTone(900, 'triangle', 0.04, 0.05); }
-  function playAlarm() { playTone(440, 'sawtooth', 0.18, 0.15); }
-  function playSuccess() { playTone(600, 'sine', 0.1, 0.08); }
-
-  toggleAudioBtn.addEventListener('click', () => {
-    initAudio();
-    state.soundEnabled = !state.soundEnabled;
-    if (state.soundEnabled) {
-      audioIcon.textContent = '🔊';
-      toggleAudioBtn.classList.add('highlight');
-      playTone(520, 'sine', 0.1, 0.1);
-    } else {
-      audioIcon.textContent = '🔇';
-      toggleAudioBtn.classList.remove('highlight');
-    }
-  });
-
-  // ==================== 2. INTERACTIVE CIP HEX INSPECTOR ====================
-  hexBytes.forEach(byteEl => {
-    byteEl.addEventListener('mouseenter', handleByteInspect);
-    byteEl.addEventListener('click', handleByteInspect);
-  });
-
-  function handleByteInspect(e) {
-    const el = e.currentTarget;
-    const offset = el.dataset.offset || '0x00';
-    const field = el.dataset.field || 'CIP Encapsulation Field';
-    byteOffsetPill.textContent = `OFFSET ${offset}`;
-    byteMeaning.innerHTML = `<strong>Active Field:</strong> <code>${field}</code>`;
-    playClick();
+  function playAlarm() {
+    playTone(880, 0.25, 'sawtooth', 0.15);
+    setTimeout(() => playTone(587, 0.3, 'sawtooth', 0.15), 180);
   }
 
-  // ==================== 3. SYSLOG DIAGNOSTIC TERMINAL ====================
-  function logMessage(level, text) {
-    const time = new Date().toLocaleTimeString('en-US', { hour12: false });
-    const line = document.createElement('div');
-    line.className = `log-line ${level}`;
-    line.textContent = `[${time}] ${text}`;
-    syslogConsole.appendChild(line);
-    syslogConsole.scrollTop = syslogConsole.scrollHeight;
-
-    while (syslogConsole.children.length > 30) {
-      syslogConsole.removeChild(syslogConsole.firstChild);
-    }
+  function playSuccess() {
+    playTone(440, 0.1, 'sine', 0.08);
+    setTimeout(() => playTone(659, 0.15, 'sine', 0.08), 80);
   }
 
-  // ==================== 4. ARCHITECTURE MODE SWITCHER ====================
-  function setMode(newMode) {
-    state.mode = newMode;
-    state.isUnderAttack = false;
-    state.attackQuarantined = false;
+  // ==================== 3. SUITE 1 ARCHITECTURE MODES ====================
+  function setMotionMode(mode) {
+    state.motionMode = mode;
+    archButtons.forEach(btn => btn.classList.toggle('active', btn.dataset.mode === mode));
 
-    modeTabs.forEach(tab => {
-      tab.classList.toggle('active', tab.dataset.mode === newMode);
-    });
-
-    if (newMode === 'shield') {
-      shieldIcon.textContent = '🛡️';
-      shieldLabel.textContent = 'CIP-Shield Proxy';
-      shieldSub.textContent = 'eBPF Fast-Path';
-      shieldBadge.textContent = 'Active Enclave';
-      enclaveLed.style.background = 'var(--cyan-accent)';
-      nodeShield.style.opacity = '1';
-      nodeShield.classList.remove('faulted');
-
-      archBanner.className = 'architecture-banner green';
-      bannerIcon.textContent = '🛡️';
-      bannerTitle.textContent = 'PROPOSED: CIP-Shield Hardware Enclave Active';
-      bannerPill.textContent = 'LATENCY ≤ 13.82µs VERIFIED';
-      bannerPill.style.color = 'var(--cyan-accent)';
-      bannerDesc.innerHTML = 'Linux eBPF kernel fast-path offloads cryptography from the ControlLogix CPU. Packets verified at driver layer in &le; 13.82&mu;s. Hard determinism maintained with zero packet jitter.';
-
-      frameStatus.textContent = 'STATUS: 0x0000 (VALIDATED)';
-      frameStatus.style.color = 'var(--green-nominal)';
-      serviceByte.textContent = '4E';
-      serviceByte.className = 'byte highlight';
-      slotByte.textContent = '02';
-      slotByte.className = 'byte';
-      frameDesc.innerHTML = '<strong>Active Encapsulation:</strong> SendRRData (0x006F) | <strong>Service:</strong> Forward Open (0x4E) | <strong>Target Slot:</strong> 0x02 | <strong>Cryptographic Tag:</strong> Poly1305 Valid';
-
-      overallDot.className = 'pulse-indicator';
-      overallText.textContent = 'SYSTEM NOMINAL (PROTECTED)';
-
+    if (mode === 'shield') {
       setFactoryRunning(true);
-      logMessage('info', 'Switched to CIP-Shield Architecture: eBPF zero-copy kernel filter active. Micro-crypto enabled.');
+      overallDot.className = 'status-pulse-dot';
+      overallStatusText.textContent = 'CIP-SHIELD NOMINAL &bull; 0.84ms';
+      tagCryptoStatus.textContent = 'Poly1305 MAC Verified in 13.82µs';
+      tagCryptoStatus.className = 'field-tag green';
+      packetCrcBadge.textContent = 'CRC32: 0x94B2E1 &bull; VALID';
+      packetCrcBadge.style.color = '#6EE7B7';
+      stopDowntimeCounter();
+      logSyslog('info', '[MODE] Switched to CIP-Shield Architecture: eBPF kernel fast-path active.');
       playSuccess();
 
-    } else if (newMode === 'legacy') {
-      shieldIcon.textContent = '⚠️';
-      shieldLabel.textContent = 'Direct Passthrough';
-      shieldSub.textContent = 'No Encryption';
-      shieldBadge.textContent = 'Unprotected';
-      enclaveLed.style.background = '#64748B';
-      nodeShield.style.opacity = '0.75';
-      nodeShield.classList.remove('faulted');
-
-      archBanner.className = 'architecture-banner red';
-      bannerIcon.textContent = '⚠️';
-      bannerTitle.textContent = 'VULNERABLE: Legacy Brownfield ControlLogix';
-      bannerPill.textContent = 'CVE-2024-6242 EXPOSED';
-      bannerPill.style.color = '#FF5252';
-      bannerDesc.innerHTML = 'ControlLogix communicates in unencrypted plaintext over Port 44818. Vulnerable to CVE-2024-6242 slot bypass and CVE-2026-9637 DoS. Click "Infiltrate CIP Exploit" to test.';
-
-      frameStatus.textContent = 'STATUS: 0x0000 (CLEARTEXT CIP)';
-      frameStatus.style.color = '#F59E0B';
-      serviceByte.textContent = '4E';
-      serviceByte.className = 'byte highlight';
-      slotByte.textContent = '02';
-      slotByte.className = 'byte';
-      frameDesc.innerHTML = '<strong>Active Encapsulation:</strong> SendRRData (0x006F) | <strong>Service:</strong> Forward Open (0x4E) | <strong>Target Slot:</strong> 0x02 | <strong>Cryptographic Tag:</strong> NONE (Plaintext)';
-
-      overallDot.className = 'pulse-indicator warn';
-      overallText.textContent = 'SYSTEM VULNERABLE (UNENCRYPTED)';
-
+    } else if (mode === 'legacy') {
       setFactoryRunning(true);
-      logMessage('warn', 'Switched to Legacy Brownfield Mode: CIP packets traversing Port 44818 unencrypted.');
-      playClick();
+      overallDot.className = 'status-pulse-dot';
+      overallStatusText.textContent = 'UNENCRYPTED CIP (PORT 44818)';
+      tagCryptoStatus.textContent = 'Plaintext CIP (No Encryption)';
+      tagCryptoStatus.className = 'field-tag';
+      packetCrcBadge.textContent = 'CRC32: 0x94B2E1 &bull; UNENCRYPTED';
+      packetCrcBadge.style.color = '#94A3B8';
+      stopDowntimeCounter();
+      logSyslog('warn', '[MODE] Switched to Legacy Brownfield: Unencrypted CIP exposed on Port 44818.');
 
-    } else if (newMode === 'tls') {
-      shieldIcon.textContent = '🔐';
-      shieldLabel.textContent = 'Standard TLS';
-      shieldSub.textContent = 'Heavy Crypto Loop';
-      shieldBadge.textContent = 'High Overhead';
-      enclaveLed.style.background = 'var(--amber-warning)';
-      nodeShield.style.opacity = '1';
-
-      archBanner.className = 'architecture-banner amber';
-      bannerIcon.textContent = '🛑';
-      bannerTitle.textContent = 'NAIVE FIX: Standard TLS Overloads PLC & Halts Assembly Line';
-      bannerPill.textContent = 'WATCHDOG TRIP (32.2ms)';
-      bannerPill.style.color = 'var(--amber-warning)';
-      bannerDesc.innerHTML = 'Standard TLS 1.3 crypto handshakes spike PLC CPU to 93%, pushing cyclic latency to 32.2ms. This breaches the 5.0ms Safety Watchdog threshold, triggering an automatic E-STOP halt ($4,333/min downtime). Click "CIP-Shield" to restore production!';
-
-      frameStatus.textContent = 'STATUS: 0x001F (BUFFER FULL / JITTER LAG)';
-      frameStatus.style.color = 'var(--rok-red)';
-      serviceByte.textContent = '16';
-      serviceByte.className = 'byte attack-byte';
-      slotByte.textContent = '02';
-      slotByte.className = 'byte';
-      frameDesc.innerHTML = '<strong>Active Encapsulation:</strong> TLS Handshake (0x16) | <strong>Record:</strong> DTLS 1.3 | <strong>Crypto CPU:</strong> 94% Overload | <strong>Latency Drift:</strong> +32.4ms';
-
-      overallDot.className = 'pulse-indicator warn';
-      overallText.textContent = 'HIGH JITTER (WATCHDOG BREACH)';
-
-      setTimeout(() => {
-        if (state.mode === 'tls') {
-          triggerWatchdogHalt();
-        }
-      }, 1000);
-
-      logMessage('warn', 'Switched to Standard TLS Retrofit: Controller CPU overloaded with asymmetric TLS 1.3 handshakes.');
-      playAlarm();
+    } else if (mode === 'tls') {
+      logSyslog('error', '[MODE] Switched to Standard TLS Retrofit: Controller CPU overloaded with TLS 1.3 handshakes.');
+      triggerWatchdogHalt();
     }
-    updateMetrics();
+
+    updateCandidateHud();
+    updateHexDump();
   }
 
-  // ==================== 5. FACTORY PHYSICAL STATE CONTROL ====================
-  function setFactoryRunning(isRunning) {
-    if (isRunning) {
-      factoryWorkstation.classList.remove('halted');
-      strobeBeacon.classList.remove('active');
-      ledRun.className = 'slot-led green';
-      ledFault.className = 'slot-led';
-      ledIo.className = 'slot-led green';
-      ledMotion.className = 'slot-led green';
-      lineSpeed.textContent = 'Output: 450 Units/min';
-      lineSpeed.style.color = 'var(--text-muted)';
+  archButtons.forEach(btn => {
+    btn.addEventListener('click', () => setMotionMode(btn.dataset.mode));
+  });
+
+  function setFactoryRunning(running) {
+    state.factoryRunning = running;
+    if (running) {
+      cellStatusPill.textContent = 'CYCLE ACTIVE &bull; 450 UNITS/MIN';
+      cellStatusPill.style.color = '#6EE7B7';
+      cellStatusPill.style.borderColor = 'rgba(16, 185, 129, 0.3)';
+      hwRobotStatus.textContent = 'WELDING (J1-J6 NOMINAL)';
+      hwRobotStatus.className = 'hw-val green';
       stopDowntimeCounter();
     } else {
-      factoryWorkstation.classList.add('halted');
-      strobeBeacon.classList.add('active');
-      ledRun.className = 'slot-led';
-      ledFault.className = 'slot-led red';
-      ledIo.className = 'slot-led';
-      ledMotion.className = 'slot-led';
-      lineSpeed.textContent = 'Output: 0 Units/min (HALTED)';
-      lineSpeed.style.color = '#FF5252';
+      cellStatusPill.textContent = 'LINE HALTED &bull; 0 UNITS/MIN (E-STOP)';
+      cellStatusPill.style.color = '#F87171';
+      cellStatusPill.style.borderColor = 'rgba(212, 27, 44, 0.4)';
+      hwRobotStatus.textContent = 'E-STOP TRIPPED (ZERO MOTION)';
+      hwRobotStatus.className = 'hw-val red';
       startDowntimeCounter();
       playAlarm();
     }
@@ -313,19 +281,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function triggerWatchdogHalt() {
     setFactoryRunning(false);
-    overallDot.className = 'pulse-indicator fault';
-    overallText.textContent = 'WATCHDOG TRIP (E-STOP)';
-    logMessage('error', '[WATCHDOG TRIP] Cyclic packet jitter exceeded 5.0ms threshold (measured: 32.22ms). E-Stop triggered to prevent machine damage!');
+    overallDot.className = 'status-pulse-dot fault';
+    overallStatusText.textContent = 'WATCHDOG TRIP (E-STOP)';
+    logSyslog('error', '[WATCHDOG] Cyclic latency exceeded 5.0ms threshold (measured: 32.4ms). Controller triggered safety E-Stop!');
   }
 
-  // ==================== 6. DOWNTIME LOSS COUNTER ($4,333 / min) ====================
+  // Downtime Counter ($4,333 / min)
   function startDowntimeCounter() {
     if (!state.downtimeTimer) {
       state.downtimeTimer = setInterval(() => {
-        state.downtimeSeconds += 0.2;
+        state.downtimeSeconds += 0.25;
         const lossDollars = (state.downtimeSeconds * (4333.33 / 60.0)).toFixed(2);
-        metricLoss.textContent = `$${Number(lossDollars).toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
-      }, 200);
+        valLoss.textContent = `$${Number(lossDollars).toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
+        const pct = Math.min(100, (state.downtimeSeconds / 30) * 100);
+        barLoss.style.width = `${pct}%`;
+      }, 250);
     }
   }
 
@@ -335,355 +305,825 @@ document.addEventListener('DOMContentLoaded', () => {
       state.downtimeTimer = null;
     }
     state.downtimeSeconds = 0;
-    metricLoss.textContent = '$0.00';
+    valLoss.textContent = '$0.00';
+    barLoss.style.width = '0%';
   }
 
-  // ==================== 7. ATTACK SIMULATION ENGINE (CVE-2024-6242) ====================
-  function triggerAttack() {
+  // Infiltrate Exploit Packet
+  infiltrateAttackBtn.addEventListener('click', () => {
     if (state.isUnderAttack) return;
     state.isUnderAttack = true;
 
-    logMessage('error', 'ALERT: Malicious CIP Encapsulation Frame detected on Port 44818!');
-    logMessage('error', 'PAYLOAD: CVE-2024-6242 Slot Bypass attempt targeting Backplane Slot 0x02.');
+    logSyslog('error', '[SECURITY] Infiltrating forged CIP encapsulation frame targeting Backplane Slot 0x02...');
     playAlarm();
 
-    createPacket(stream1, true);
-
-    if (state.mode === 'legacy') {
+    if (state.motionMode === 'legacy') {
       setTimeout(() => {
-        createPacket(stream2, true);
-        nodeShield.classList.add('faulted');
-        frameStatus.textContent = 'STATUS: 0x0004 (UNAUTHORIZED SETPOINT OVERWRITE)';
-        frameStatus.style.color = 'var(--rok-red)';
-        serviceByte.textContent = '4D';
-        serviceByte.className = 'byte attack-byte';
-        slotByte.textContent = '02';
-        slotByte.className = 'byte attack-byte';
-        frameDesc.innerHTML = '<strong>ATTACK SUCCESSFUL:</strong> Attacker forged CIP payload to write arbitrary motor velocity to Slot 0x02. ControlLogix hijacked.';
-      }, 600);
-
-      setTimeout(() => {
-        createPacket(stream3, true);
         setFactoryRunning(false);
-        overallDot.className = 'pulse-indicator fault';
-        overallText.textContent = 'PLC COMPROMISED (CVE-2024-6242)';
-        logMessage('error', 'CRITICAL FAULT: Conveyor servo velocity tag overwritten! Safety trip triggered.');
-      }, 1200);
+        overallDot.className = 'status-pulse-dot fault';
+        overallStatusText.textContent = 'PLC HIJACKED (CVE-2024-6242)';
+        logSyslog('error', '[CRITICAL] CVE-2024-6242 slot bypass succeeded: Motor velocity overwritten! Safety trip triggered.');
+        updateHexDump(true);
+        state.isUnderAttack = false;
+      }, 700);
 
-    } else if (state.mode === 'shield') {
+    } else if (state.motionMode === 'shield') {
       setTimeout(() => {
-        nodeShield.classList.add('faulted');
-        setTimeout(() => nodeShield.classList.remove('faulted'), 500);
-        logMessage('success', '[CIP-SHIELD eBPF] XDP kernel hook dropped forged packet in 13.82µs. Attacker isolated.');
-        logMessage('info', '[SYNTHESIS] Feeding valid synthetic status beacon to ControlLogix backplane. Determinism preserved.');
-        createPacket(stream2, false);
-      }, 600);
-
-      setTimeout(() => {
-        createPacket(stream3, false);
-        frameStatus.textContent = 'STATUS: 0x0000 (ATTACK QUARANTINED - JITTER: 0.04ms)';
-        frameStatus.style.color = 'var(--green-nominal)';
-        frameDesc.innerHTML = '<strong>CIP-Shield Action:</strong> Cryptographic Poly1305 MAC tag failure detected at driver ring. Frame dropped in 13.82&mu;s. Factory operational.';
+        logSyslog('success', '[CIP-SHIELD eBPF] XDP driver hook intercepted forged frame: Poly1305 MAC failure.');
+        logSyslog('info', '[SYNTHETIC KEEP-ALIVE] Injected synthetic nominal beacon into 1756 backplane. 0.84ms determinism preserved.');
         state.isUnderAttack = false;
         playSuccess();
-      }, 1200);
+      }, 600);
 
-    } else if (state.mode === 'tls') {
+    } else if (state.motionMode === 'tls') {
       setTimeout(() => {
-        logMessage('warn', '[TLS PROXY] Cryptographic signature check failed after 34ms processing delay.');
+        logSyslog('warn', '[TLS PROXY] Cryptographic signature verification failed after 34ms processing backlog.');
         triggerWatchdogHalt();
         state.isUnderAttack = false;
-      }, 800);
+      }, 600);
+    }
+  });
+
+  resetMotionSimBtn.addEventListener('click', () => {
+    state.isUnderAttack = false;
+    setMotionMode('shield');
+    logSyslog('info', '[RESET] Diagnostic registers cleared. All industrial nodes nominal.');
+  });
+
+  // ==================== 4. PACKET HEX INSPECTOR DUMP ====================
+  function updateHexDump(isAttack = false) {
+    let bytes = [
+      '6F', '00', '18', '00', 'A4', '12', 'B8', '00',
+      '4E', '02', '20', '67', '24', '01', '00', '00',
+      '00', '00', '00', '00', 'A1', '0F', '7B', '9C',
+      '02', '1A', '00', '00', 'E4', '5D', '11', '00'
+    ];
+
+    if (isAttack) {
+      bytes[8] = '4D'; // Malicious Set_Attribute
+      bytes[9] = '02'; // Target slot
+    }
+
+    hexStream.innerHTML = '';
+    const row = document.createElement('div');
+    row.className = 'hex-row';
+
+    const offsetSpan = document.createElement('span');
+    offsetSpan.className = 'hex-offset';
+    offsetSpan.textContent = '0x0000:';
+
+    const bytesContainer = document.createElement('div');
+    bytesContainer.className = 'hex-bytes';
+
+    let asciiStr = '';
+
+    bytes.slice(0, 16).forEach((b, idx) => {
+      const span = document.createElement('span');
+      span.className = 'h-byte';
+      span.textContent = b;
+      if (idx === 8 && isAttack) span.className = 'h-byte danger';
+      else if (idx === 8 || idx === 9) span.className = 'h-byte hl';
+      bytesContainer.appendChild(span);
+      asciiStr += (idx === 8 ? 'N' : '.');
+    });
+
+    const asciiSpan = document.createElement('span');
+    asciiSpan.className = 'hex-ascii';
+    asciiSpan.textContent = asciiStr;
+
+    row.appendChild(offsetSpan);
+    row.appendChild(bytesContainer);
+    row.appendChild(asciiSpan);
+    hexStream.appendChild(row);
+  }
+  updateHexDump();
+
+  function logSyslog(type, msg) {
+    const entry = document.createElement('div');
+    entry.className = `log-entry ${type}`;
+    const timestamp = new Date().toTimeString().split(' ')[0];
+    entry.textContent = `[${timestamp}] ${msg}`;
+    syslogTerminal.prepend(entry);
+  }
+
+  // ==================== 5. HIGH-FIDELITY DIGITAL TWIN RENDERING (CANVAS) ====================
+  function drawDigitalTwin() {
+    const w = twinCanvas.width;
+    const h = twinCanvas.height;
+
+    twinCtx.fillStyle = '#080C14';
+    twinCtx.fillRect(0, 0, w, h);
+
+    // 1. Industrial Floor Datum Grid
+    twinCtx.strokeStyle = '#121B2A';
+    twinCtx.lineWidth = 1;
+    for (let x = 0; x < w; x += 30) {
+      twinCtx.beginPath();
+      twinCtx.moveTo(x, 0);
+      twinCtx.lineTo(x, h);
+      twinCtx.stroke();
+    }
+    for (let y = 0; y < h; y += 30) {
+      twinCtx.beginPath();
+      twinCtx.moveTo(0, y);
+      twinCtx.lineTo(w, y);
+      twinCtx.stroke();
+    }
+
+    // 2. ControlLogix 1756 Chassis Rack (Left Viewport)
+    drawControlLogixRack(25, 35);
+
+    // 3. Heavy Industrial Conveyor (Center-Right)
+    drawConveyor(220, 155, 390);
+
+    // 4. 6-Axis Articulated Industrial Robot Arm (Right)
+    drawRobotArm(460, 175);
+
+    // 5. Laser Sparks & Workcell Lighting
+    drawParticles();
+
+    // 6. Xenon Beacon Tower
+    drawBeacon(185, 30);
+
+    requestAnimationFrame(drawDigitalTwin);
+  }
+
+  // Draw Realistic ControlLogix 5580 1756 Chassis
+  function drawControlLogixRack(x, y) {
+    const rw = 145;
+    const rh = 175;
+
+    // Extruded aluminum bezel shadow
+    twinCtx.fillStyle = '#04070D';
+    twinCtx.fillRect(x + 3, y + 3, rw, rh);
+
+    // Chassis housing (Brushed aluminum & black powder coat)
+    const rackGrad = twinCtx.createLinearGradient(x, y, x + rw, y);
+    rackGrad.addColorStop(0, '#1E293B');
+    rackGrad.addColorStop(0.5, '#2A3A52');
+    rackGrad.addColorStop(1, '#1A2435');
+    twinCtx.fillStyle = rackGrad;
+    twinCtx.fillRect(x, y, rw, rh);
+    twinCtx.strokeStyle = '#384B66';
+    twinCtx.lineWidth = 1.5;
+    twinCtx.strokeRect(x, y, rw, rh);
+
+    // Top Header with Allen-Bradley Logo Bar
+    twinCtx.fillStyle = '#D41B2C';
+    twinCtx.fillRect(x + 5, y + 5, rw - 10, 14);
+    twinCtx.fillStyle = '#FFFFFF';
+    twinCtx.font = 'bold 8px Inter, sans-serif';
+    twinCtx.fillText('Allen-Bradley  ControlLogix 5580', x + 10, y + 15);
+
+    // Slot 0: 1756-L85E CPU Controller Module
+    drawPlcSlot(x + 8, y + 24, 30, rh - 30, 'CPU', true);
+
+    // Slot 1: 1756-EN4TR Dual Gigabit Ethernet Adapter
+    drawPlcSlot(x + 41, y + 24, 30, rh - 30, 'EN4TR', false, true);
+
+    // Slot 2: 1756-IB16 Digital Input (16 LED Matrix)
+    drawPlcSlot(x + 74, y + 24, 30, rh - 30, 'IB16', false, false, true);
+
+    // Slot 3: 1756-OB16 Digital Output (16 LED Matrix)
+    drawPlcSlot(x + 107, y + 24, 30, rh - 30, 'OB16', false, false, false, true);
+  }
+
+  function drawPlcSlot(sx, sy, sw, sh, label, isCpu = false, isNet = false, isIb = false, isOb = false) {
+    twinCtx.fillStyle = '#101724';
+    twinCtx.fillRect(sx, sy, sw, sh);
+    twinCtx.strokeStyle = '#1F2C40';
+    twinCtx.lineWidth = 1;
+    twinCtx.strokeRect(sx, sy, sw, sh);
+
+    // Slot label
+    twinCtx.fillStyle = '#64748B';
+    twinCtx.font = '7.5px JetBrains Mono, monospace';
+    twinCtx.fillText(label, sx + 4, sy + 12);
+
+    if (isCpu) {
+      // 4-character green LED dot-matrix display
+      twinCtx.fillStyle = '#050D09';
+      twinCtx.fillRect(sx + 4, sy + 18, 22, 10);
+      twinCtx.fillStyle = state.factoryRunning ? '#10B981' : '#D41B2C';
+      twinCtx.font = 'bold 7px JetBrains Mono, monospace';
+      const displayText = state.factoryRunning ? state.dotMatrixStrings[state.dotMatrixIndex % state.dotMatrixStrings.length] : 'FLT ';
+      twinCtx.fillText(displayText, sx + 6, sy + 26);
+
+      // Status LEDs: RUN, FLT, I/O
+      drawLedDot(sx + 7, sy + 36, state.factoryRunning ? '#10B981' : '#334155', 'RUN');
+      drawLedDot(sx + 7, sy + 46, !state.factoryRunning ? '#D41B2C' : '#334155', 'FLT');
+      drawLedDot(sx + 7, sy + 56, state.factoryRunning ? '#10B981' : '#334155', 'OK');
+
+      // Key Switch (RUN position)
+      twinCtx.fillStyle = '#475569';
+      twinCtx.beginPath();
+      twinCtx.arc(sx + 15, sy + 80, 5, 0, Math.PI * 2);
+      twinCtx.fill();
+      twinCtx.strokeStyle = '#E2E8F0';
+      twinCtx.lineWidth = 1.5;
+      twinCtx.beginPath();
+      twinCtx.moveTo(sx + 15, sy + 80);
+      twinCtx.lineTo(sx + 15, sy + 75); // Vertical = RUN
+      twinCtx.stroke();
+    }
+
+    if (isNet) {
+      // RJ45 Dual Ports with blinking link LEDs
+      twinCtx.fillStyle = '#060B12';
+      twinCtx.fillRect(sx + 5, sy + 22, 20, 16);
+      twinCtx.fillRect(sx + 5, sy + 44, 20, 16);
+      // Link LEDs
+      const blink = (Math.floor(Date.now() / 150) % 2 === 0) && state.factoryRunning;
+      drawLedDot(sx + 7, sy + 20, blink ? '#10B981' : '#334155');
+      drawLedDot(sx + 18, sy + 20, blink ? '#F59E0B' : '#334155');
+      drawLedDot(sx + 7, sy + 42, blink ? '#10B981' : '#334155');
+      drawLedDot(sx + 18, sy + 42, blink ? '#F59E0B' : '#334155');
+    }
+
+    if (isIb || isOb) {
+      // 16-channel LED indicator matrix (4 rows of 4)
+      for (let r = 0; r < 6; r++) {
+        for (let c = 0; c < 2; c++) {
+          const ledOn = state.factoryRunning && ((r * 2 + c + Math.floor(Date.now() / 200)) % 3 !== 0);
+          const color = isIb ? (ledOn ? '#F59E0B' : '#1E293B') : (ledOn ? '#10B981' : '#1E293B');
+          drawLedDot(sx + 8 + c * 10, sy + 24 + r * 10, color);
+        }
+      }
     }
   }
 
-  function createPacket(container, isAttack) {
-    const packet = document.createElement('div');
-    packet.className = `cip-packet ${isAttack ? 'attack' : ''}`;
-    container.appendChild(packet);
-    setTimeout(() => {
-      if (packet.parentNode) {
-        packet.parentNode.removeChild(packet);
-      }
-    }, 1200);
+  function drawLedDot(lx, ly, color, lbl) {
+    twinCtx.fillStyle = color;
+    twinCtx.beginPath();
+    twinCtx.arc(lx, ly, 2.2, 0, Math.PI * 2);
+    twinCtx.fill();
+
+    if (lbl) {
+      twinCtx.fillStyle = '#64748B';
+      twinCtx.font = '6px JetBrains Mono, monospace';
+      twinCtx.fillText(lbl, lx + 5, ly + 2);
+    }
   }
 
-  // ==================== 8. TELEMETRY & METRIC UPDATE LOOP ====================
-  function updateMetrics() {
+  // Draw Heavy Conveyor
+  function drawConveyor(cx, cy, len) {
+    // Bed frame
+    twinCtx.fillStyle = '#111827';
+    twinCtx.fillRect(cx, cy, len, 24);
+    twinCtx.strokeStyle = '#374151';
+    twinCtx.lineWidth = 1.5;
+    twinCtx.strokeRect(cx, cy, len, 24);
+
+    // Stainless flight rails
+    twinCtx.fillStyle = '#4B5563';
+    twinCtx.fillRect(cx, cy - 2, len, 3);
+    twinCtx.fillRect(cx, cy + 23, len, 3);
+
+    // Rollers
+    if (state.factoryRunning) {
+      state.conveyorOffset = (state.conveyorOffset + 2) % 24;
+    }
+    twinCtx.strokeStyle = '#1F2937';
+    twinCtx.lineWidth = 1;
+    for (let r = cx; r < cx + len; r += 12) {
+      const rx = r + (state.factoryRunning ? (state.conveyorOffset % 12) : 0);
+      if (rx < cx + len - 2) {
+        twinCtx.beginPath();
+        twinCtx.moveTo(rx, cy + 2);
+        twinCtx.lineTo(rx, cy + 22);
+        twinCtx.stroke();
+      }
+    }
+
+    // Machined Automotive Parts moving on conveyor
+    for (let p = 0; p < 4; p++) {
+      const px = cx + ((p * 95 + state.conveyorOffset * 2) % len);
+      drawMachinedPart(px, cy - 12);
+    }
+  }
+
+  function drawMachinedPart(px, py) {
+    twinCtx.fillStyle = '#64748B';
+    twinCtx.fillRect(px, py, 26, 12);
+    twinCtx.strokeStyle = '#94A3B8';
+    twinCtx.lineWidth = 1;
+    twinCtx.strokeRect(px, py, 26, 12);
+
+    // Detail milling pockets
+    twinCtx.fillStyle = '#334155';
+    twinCtx.fillRect(px + 4, py + 2, 7, 8);
+    twinCtx.fillRect(px + 15, py + 2, 7, 8);
+  }
+
+  // Draw 6-Axis Heavy Articulated Robot Arm
+  function drawRobotArm(rx, ry) {
+    if (state.factoryRunning) {
+      state.robotAngle += 0.04;
+    }
+    const sweep = Math.sin(state.robotAngle) * 0.25;
+
+    // 1. Pedestal Base
+    twinCtx.fillStyle = '#1E293B';
+    twinCtx.fillRect(rx - 22, ry + 10, 44, 20);
+    twinCtx.strokeStyle = '#475569';
+    twinCtx.lineWidth = 1.5;
+    twinCtx.strokeRect(rx - 22, ry + 10, 44, 20);
+
+    // 2. Base Joint (Turret J1)
+    twinCtx.fillStyle = '#D41B2C'; // Rockwell Crimson
+    twinCtx.beginPath();
+    twinCtx.arc(rx, ry + 10, 16, Math.PI, 0);
+    twinCtx.fill();
+    twinCtx.strokeStyle = '#FFFFFF';
+    twinCtx.lineWidth = 1;
+    twinCtx.stroke();
+
+    // Joint 2 (Shoulder)
+    const j2x = rx - 5;
+    const j2y = ry - 12;
+
+    // Bicep Linkage
+    const bicepLen = 65;
+    const bicepAngle = -Math.PI / 2.3 + sweep * 0.4;
+    const j3x = j2x + Math.cos(bicepAngle) * bicepLen;
+    const j3y = j2y + Math.sin(bicepAngle) * bicepLen;
+
+    // Draw Bicep Body
+    twinCtx.strokeStyle = '#1E293B';
+    twinCtx.lineWidth = 14;
+    twinCtx.beginPath();
+    twinCtx.moveTo(j2x, j2y);
+    twinCtx.lineTo(j3x, j3y);
+    twinCtx.stroke();
+
+    // Red Accent on Arm Link
+    twinCtx.strokeStyle = '#D41B2C';
+    twinCtx.lineWidth = 8;
+    twinCtx.beginPath();
+    twinCtx.moveTo(j2x + 4, j2y);
+    twinCtx.lineTo(j3x - 4, j3y);
+    twinCtx.stroke();
+
+    // Hydraulic Actuator Cylinder
+    twinCtx.strokeStyle = '#94A3B8';
+    twinCtx.lineWidth = 3;
+    twinCtx.beginPath();
+    twinCtx.moveTo(j2x + 8, j2y + 6);
+    twinCtx.lineTo(j3x + 6, j3y + 12);
+    twinCtx.stroke();
+
+    // Joint 3 (Elbow) Pivot
+    twinCtx.fillStyle = '#334155';
+    twinCtx.beginPath();
+    twinCtx.arc(j3x, j3y, 8, 0, Math.PI * 2);
+    twinCtx.fill();
+
+    // Forearm Linkage
+    const forearmLen = 55;
+    const forearmAngle = Math.PI / 4 + sweep * 0.8;
+    const j4x = j3x + Math.cos(forearmAngle) * forearmLen;
+    const j4y = j3y + Math.sin(forearmAngle) * forearmLen;
+
+    twinCtx.strokeStyle = '#1E293B';
+    twinCtx.lineWidth = 10;
+    twinCtx.beginPath();
+    twinCtx.moveTo(j3x, j3y);
+    twinCtx.lineTo(j4x, j4y);
+    twinCtx.stroke();
+
+    // Wrist Flange & Laser Tooling
+    twinCtx.fillStyle = '#64748B';
+    twinCtx.beginPath();
+    twinCtx.arc(j4x, j4y, 6, 0, Math.PI * 2);
+    twinCtx.fill();
+
+    // Laser Optics Nozzle pointing straight down to part
+    const tipX = j4x;
+    const tipY = j4y + 16;
+    twinCtx.strokeStyle = '#CBD5E1';
+    twinCtx.lineWidth = 4;
+    twinCtx.beginPath();
+    twinCtx.moveTo(j4x, j4y);
+    twinCtx.lineTo(tipX, tipY);
+    twinCtx.stroke();
+
+    // Laser Beam & Optical Spot (Active only if running)
+    if (state.factoryRunning) {
+      const weldY = 153;
+      twinCtx.strokeStyle = 'rgba(6, 182, 212, 0.8)';
+      twinCtx.lineWidth = 2;
+      twinCtx.beginPath();
+      twinCtx.moveTo(tipX, tipY);
+      twinCtx.lineTo(tipX, weldY);
+      twinCtx.stroke();
+
+      // Optical focal glow
+      const glow = twinCtx.createRadialGradient(tipX, weldY, 1, tipX, weldY, 15);
+      glow.addColorStop(0, '#FFFFFF');
+      glow.addColorStop(0.3, '#38BDF8');
+      glow.addColorStop(1, 'transparent');
+      twinCtx.fillStyle = glow;
+      twinCtx.beginPath();
+      twinCtx.arc(tipX, weldY, 15, 0, Math.PI * 2);
+      twinCtx.fill();
+
+      // Emit sparks
+      if (Math.random() > 0.3) {
+        for (let i = 0; i < 3; i++) {
+          state.weldSparks.push({
+            x: tipX,
+            y: weldY,
+            vx: (Math.random() - 0.5) * 5,
+            vy: -Math.random() * 4 - 1,
+            life: 1.0
+          });
+        }
+      }
+    }
+  }
+
+  function drawParticles() {
+    for (let i = state.weldSparks.length - 1; i >= 0; i--) {
+      const p = state.weldSparks[i];
+      p.x += p.vx;
+      p.y += p.vy;
+      p.vy += 0.2; // Gravity
+      p.life -= 0.05;
+
+      if (p.life <= 0) {
+        state.weldSparks.splice(i, 1);
+        continue;
+      }
+
+      twinCtx.fillStyle = `rgba(255, 235, 59, ${p.life})`;
+      twinCtx.beginPath();
+      twinCtx.arc(p.x, p.y, 1.5, 0, Math.PI * 2);
+      twinCtx.fill();
+    }
+  }
+
+  function drawBeacon(bx, by) {
+    twinCtx.fillStyle = '#0F172A';
+    twinCtx.fillRect(bx, by + 40, 6, 60);
+
+    const isFault = !state.factoryRunning;
+    const isWarn = state.motionMode === 'legacy' && state.isUnderAttack;
+
+    // Green lens
+    drawBeaconLens(bx - 3, by + 24, (!isFault && !isWarn) ? '#10B981' : '#1E293B', true);
+    // Amber lens
+    drawBeaconLens(bx - 3, by + 12, isWarn ? '#F59E0B' : '#1E293B', isWarn);
+    // Red Xenon Strobe lens
+    const flashRed = isFault && (Math.floor(Date.now() / 200) % 2 === 0);
+    drawBeaconLens(bx - 3, by, isFault ? (flashRed ? '#EF4444' : '#7F1D1D') : '#1E293B', isFault);
+  }
+
+  function drawBeaconLens(lx, ly, col, glow = false) {
+    twinCtx.fillStyle = col;
+    twinCtx.fillRect(lx, ly, 12, 10);
+    twinCtx.strokeStyle = '#000';
+    twinCtx.lineWidth = 1;
+    twinCtx.strokeRect(lx, ly, 12, 10);
+    if (glow) {
+      twinCtx.shadowColor = col;
+      twinCtx.shadowBlur = 8;
+      twinCtx.strokeRect(lx, ly, 12, 10);
+      twinCtx.shadowBlur = 0;
+    }
+  }
+
+  // Dot Matrix Rolling Timer
+  setInterval(() => {
+    state.dotMatrixIndex++;
+  }, 1200);
+
+  // ==================== 6. KEYSIGHT DIGITAL OSCILLOSCOPE ====================
+  function drawScope() {
+    const sw = scopeCanvas.width;
+    const sh = scopeCanvas.height;
+
+    // CRT Screen Background
+    scopeCtx.fillStyle = '#03070E';
+    scopeCtx.fillRect(0, 0, sw, sh);
+
+    // 10x8 Calibrated Graticule
+    scopeCtx.strokeStyle = '#0F1B2B';
+    scopeCtx.lineWidth = 1;
+    scopeCtx.setLineDash([2, 4]);
+
+    const numCols = 10;
+    const numRows = 8;
+    for (let c = 1; c < numCols; c++) {
+      const gx = (sw / numCols) * c;
+      scopeCtx.beginPath();
+      scopeCtx.moveTo(gx, 0);
+      scopeCtx.lineTo(gx, sh);
+      scopeCtx.stroke();
+    }
+    for (let r = 1; r < numRows; r++) {
+      const gy = (sh / numRows) * r;
+      scopeCtx.beginPath();
+      scopeCtx.moveTo(0, gy);
+      scopeCtx.lineTo(sw, gy);
+      scopeCtx.stroke();
+    }
+    scopeCtx.setLineDash([]);
+
+    // Watchdog Threshold Line (5.0ms)
+    const tripY = sh - (5.0 / 40.0) * sh;
+    scopeCtx.strokeStyle = 'rgba(239, 68, 68, 0.7)';
+    scopeCtx.lineWidth = 1.5;
+    scopeCtx.setLineDash([4, 4]);
+    scopeCtx.beginPath();
+    scopeCtx.moveTo(0, tripY);
+    scopeCtx.lineTo(sw, tripY);
+    scopeCtx.stroke();
+    scopeCtx.setLineDash([]);
+
+    // RPI 1.0ms Target Line
+    const rpiY = sh - (1.0 / 40.0) * sh;
+    scopeCtx.strokeStyle = 'rgba(6, 182, 212, 0.5)';
+    scopeCtx.lineWidth = 1;
+    scopeCtx.beginPath();
+    scopeCtx.moveTo(0, rpiY);
+    scopeCtx.lineTo(sw, rpiY);
+    scopeCtx.stroke();
+
+    // Actual Latency Waveform Sweep (Phosphor Persistence)
+    const pts = state.latencyHistory;
+    const stepX = sw / (pts.length - 1);
+
+    scopeCtx.strokeStyle = state.motionMode === 'tls' ? '#EF4444' : '#06B6D4';
+    scopeCtx.shadowColor = state.motionMode === 'tls' ? '#EF4444' : '#06B6D4';
+    scopeCtx.shadowBlur = 8;
+    scopeCtx.lineWidth = 2.5;
+
+    scopeCtx.beginPath();
+    pts.forEach((val, i) => {
+      const px = i * stepX;
+      const clampedVal = Math.min(38, val);
+      const py = sh - (clampedVal / 40.0) * sh;
+      if (i === 0) scopeCtx.moveTo(px, py);
+      else scopeCtx.lineTo(px, py);
+    });
+    scopeCtx.stroke();
+    scopeCtx.shadowBlur = 0;
+
+    requestAnimationFrame(drawScope);
+  }
+
+  // Telemetry Metric Generator Loop
+  setInterval(() => {
     let targetLatency = 0.84;
     let targetJitter = 0.04;
     let targetCpu = 24;
 
-    if (state.mode === 'shield') {
-      targetLatency = 0.82 + (Math.random() * 0.06);
-      targetJitter = 0.03 + (Math.random() * 0.02);
-      targetCpu = 22 + Math.floor(Math.random() * 6);
-      dotLatency.className = 'metric-status-dot green';
-      dotJitter.className = 'metric-status-dot green';
-      dotCpu.className = 'metric-status-dot green';
-      dotLoss.className = 'metric-status-dot green';
+    if (state.motionMode === 'shield') {
+      targetLatency = 0.82 + Math.random() * 0.05;
+      targetJitter = 0.03 + Math.random() * 0.02;
+      targetCpu = 22 + Math.floor(Math.random() * 5);
+      dotLatency.className = 'tile-dot green';
+      dotJitter.className = 'tile-dot green';
+      dotCpu.className = 'tile-dot green';
+      barLatency.style.background = 'var(--cyan-scope)';
+      barJitter.style.background = 'var(--cyan-scope)';
+      barCpu.style.background = 'var(--cyan-scope)';
 
-    } else if (state.mode === 'legacy') {
+    } else if (state.motionMode === 'legacy') {
       if (state.isUnderAttack) {
-        targetLatency = 1.95 + (Math.random() * 0.5);
-        targetJitter = 0.45 + (Math.random() * 0.2);
-        targetCpu = 48 + Math.floor(Math.random() * 10);
-        dotLatency.className = 'metric-status-dot amber';
-        dotJitter.className = 'metric-status-dot amber';
+        targetLatency = 2.45 + Math.random() * 0.8;
+        targetJitter = 0.75 + Math.random() * 0.3;
+        targetCpu = 52 + Math.floor(Math.random() * 12);
+        dotLatency.className = 'tile-dot amber';
+        dotJitter.className = 'tile-dot amber';
       } else {
-        targetLatency = 0.81 + (Math.random() * 0.05);
-        targetJitter = 0.03 + (Math.random() * 0.02);
-        targetCpu = 20 + Math.floor(Math.random() * 5);
-        dotLatency.className = 'metric-status-dot green';
-        dotJitter.className = 'metric-status-dot green';
+        targetLatency = 0.81 + Math.random() * 0.04;
+        targetJitter = 0.03 + Math.random() * 0.02;
+        targetCpu = 20 + Math.floor(Math.random() * 4);
+        dotLatency.className = 'tile-dot green';
+        dotJitter.className = 'tile-dot green';
       }
-      dotCpu.className = 'metric-status-dot green';
-      dotLoss.className = 'metric-status-dot green';
+      dotCpu.className = 'tile-dot green';
 
-    } else if (state.mode === 'tls') {
-      targetLatency = 31.8 + (Math.random() * 2.8);
-      targetJitter = 15.5 + (Math.random() * 3.5);
-      targetCpu = 92 + Math.floor(Math.random() * 6);
-      dotLatency.className = 'metric-status-dot red';
-      dotJitter.className = 'metric-status-dot red';
-      dotCpu.className = 'metric-status-dot red';
-      dotLoss.className = 'metric-status-dot red';
+    } else if (state.motionMode === 'tls') {
+      targetLatency = 32.1 + Math.random() * 2.5;
+      targetJitter = 16.2 + Math.random() * 3.0;
+      targetCpu = 94 + Math.floor(Math.random() * 5);
+      dotLatency.className = 'tile-dot red';
+      dotJitter.className = 'tile-dot red';
+      dotCpu.className = 'tile-dot red';
+      barLatency.style.background = 'var(--rok-red)';
+      barJitter.style.background = 'var(--rok-red)';
+      barCpu.style.background = 'var(--rok-red)';
     }
 
     state.currentLatency = targetLatency;
     state.currentJitter = targetJitter;
     state.currentCpu = targetCpu;
 
-    metricLatency.innerHTML = `${targetLatency.toFixed(2)} <span class="unit">ms</span>`;
-    metricJitter.innerHTML = `&plusmn;${targetJitter.toFixed(2)} <span class="unit">ms</span>`;
-    metricCpu.innerHTML = `${targetCpu} <span class="unit">%</span>`;
-    cpuBar.style.width = `${targetCpu}%`;
+    valLatency.innerHTML = `${targetLatency.toFixed(2)} <span class="unit">ms</span>`;
+    valJitter.innerHTML = `&plusmn;${targetJitter.toFixed(2)} <span class="unit">ms</span>`;
+    valCpu.innerHTML = `${targetCpu} <span class="unit">%</span>`;
 
-    if (targetCpu > 80) {
-      cpuBar.style.background = 'var(--rok-red)';
-    } else if (targetCpu > 40) {
-      cpuBar.style.background = 'var(--amber-warning)';
-    } else {
-      cpuBar.style.background = 'var(--cyan-accent)';
-    }
+    barLatency.style.width = `${Math.min(100, (targetLatency / 40.0) * 100)}%`;
+    barJitter.style.width = `${Math.min(100, (targetJitter / 20.0) * 100)}%`;
+    barCpu.style.width = `${targetCpu}%`;
 
-    // Packet channel animations
-    if (state.mode !== 'tls' || !factoryWorkstation.classList.contains('halted')) {
-      if (Math.random() > 0.4) {
-        createPacket(stream1, false);
-      }
-      if (Math.random() > 0.4) {
-        createPacket(stream2, false);
-      }
-      if (Math.random() > 0.4) {
-        createPacket(stream3, false);
-      }
-    }
-
-    // Update Oscilloscope buffer
+    // Push into buffer
     state.latencyHistory.push(targetLatency);
     state.latencyHistory.shift();
-  }
 
-  // ==================== 9. AUTHENTIC DIGITAL OSCILLOSCOPE DRAWING ====================
-  function drawOscilloscope() {
-    const width = canvas.width;
-    const height = canvas.height;
+    // Scope HUD stats
+    document.getElementById('scopePkPk').textContent = `${(targetLatency * 1.08).toFixed(2)} ms`;
+    document.getElementById('scopeRms').textContent = `${(targetJitter * 0.95).toFixed(3)} ms`;
+    document.getElementById('scopeEye').textContent = state.motionMode === 'tls' ? '12.4%' : '98.4%';
+  }, 100);
 
-    // Background
-    ctx.fillStyle = '#060910';
-    ctx.fillRect(0, 0, width, height);
+  // ==================== 7. SUITE 2: SOFTWARE TRUST GAP ENGINE ====================
+  tamperToggle.addEventListener('change', () => {
+    state.isTampered = tamperToggle.checked;
 
-    // Dotted CRT Graticule Grid
-    ctx.strokeStyle = '#162235';
-    ctx.lineWidth = 1;
-    ctx.setLineDash([2, 4]);
+    if (state.isTampered) {
+      trustNodeWorkstation.classList.add('tampered');
+      statusWorkstation.textContent = 'MALICIOUS LOGIC INJECTED';
+      statusWorkstation.className = 't-node-status bad';
+      acdFileHash.textContent = 'SHA-256: e92b...fa01 (FORGED)';
+      
+      statusPlcLogic.textContent = 'SAFETY OVERRIDDEN';
+      statusPlcLogic.className = 't-node-status bad';
+      rung1Code.textContent = '|--[/]-- E-STOP_BYPASSED ------( )-- SAFE_ENABLE --|';
+      rung1Flag.textContent = 'DISABLED'; rung1Flag.className = 'rung-flag bad';
 
-    for (let x = 0; x < width; x += 40) {
-      ctx.beginPath();
-      ctx.moveTo(x, 0);
-      ctx.lineTo(x, height);
-      ctx.stroke();
-    }
-    for (let y = 0; y < height; y += 30) {
-      ctx.beginPath();
-      ctx.moveTo(0, y);
-      ctx.lineTo(width, y);
-      ctx.stroke();
-    }
-    ctx.setLineDash([]);
+      rung2Code.textContent = '|--[ ]-- ALARM_MUTED ----------( )-- TRIP_ALARM --|';
+      rung2Flag.textContent = 'SILENCED'; rung2Flag.className = 'rung-flag bad';
 
-    // 5.0ms Watchdog Trip Limit Line (Red Dashed)
-    const watchdogY = height - (5.0 / 40.0 * (height - 30)) - 15;
-    ctx.strokeStyle = '#EF4444';
-    ctx.lineWidth = 1.5;
-    ctx.setLineDash([6, 4]);
-    ctx.beginPath();
-    ctx.moveTo(0, watchdogY);
-    ctx.lineTo(width, watchdogY);
-    ctx.stroke();
+      rung3Code.textContent = '|--[ ]-- MAX_SPEED_UNLOCKED ----( )-- MOTION_PERMIT --|';
+      rung3Flag.textContent = 'OVERRIDDEN'; rung3Flag.className = 'rung-flag bad';
 
-    // 1.0ms RPI Target Line (Cyan Dotted)
-    const targetY = height - (1.0 / 40.0 * (height - 30)) - 15;
-    ctx.strokeStyle = '#06B6D4';
-    ctx.lineWidth = 1;
-    ctx.setLineDash([2, 4]);
-    ctx.beginPath();
-    ctx.moveTo(0, targetY);
-    ctx.lineTo(width, targetY);
-    ctx.stroke();
-    ctx.setLineDash([]);
+      statusHmi.textContent = 'DECEPTIVE NORMAL';
+      hmiGreenLight.textContent = 'NORMAL (SAFETY MUTED)';
+      hmiGreenLight.className = 'hmi-green-light warn';
+      hmiEstop.textContent = 'BYPASSED';
+      hmiSafety.textContent = 'SIL-3 UNPROTECTED';
+      hmiSafety.style.color = '#F87171';
 
-    // Plot Latency Waveform
-    ctx.lineWidth = 2.2;
-    if (state.currentLatency > 5.0) {
-      ctx.strokeStyle = '#FF5252';
-      ctx.shadowColor = 'rgba(255, 82, 82, 0.5)';
-      ctx.shadowBlur = 8;
+      pipelineConsole.innerHTML = '<span style="color:#F87171; font-weight:700;">WARNING:</span> Workstation .ACD file has been tampered. Downstream ladder logic still compiles, but safety shutoff rungs are disabled. The operator SCADA view remains calm. Press "Execute Attestation Pipeline" to test automated cryptographic gating.';
+      playAlarm();
+
     } else {
-      ctx.strokeStyle = '#10B981';
-      ctx.shadowColor = 'rgba(16, 185, 129, 0.5)';
-      ctx.shadowBlur = 6;
+      trustNodeWorkstation.classList.remove('tampered');
+      statusWorkstation.textContent = 'APPROVED FILE';
+      statusWorkstation.className = 't-node-status good';
+      acdFileHash.textContent = 'SHA-256: 8a4f...31c2 (Signed)';
+
+      statusPlcLogic.textContent = 'RUNNING APPROVED';
+      statusPlcLogic.className = 't-node-status good';
+      rung1Code.textContent = '|--[ ]-- E-STOP_HEALTHY -------( )-- SAFE_ENABLE --|';
+      rung1Flag.textContent = 'ARMED'; rung1Flag.className = 'rung-flag good';
+
+      rung2Code.textContent = '|--[/]-- OVER_PRESSURE_HIGH ---( )-- TRIP_ALARM --|';
+      rung2Flag.textContent = 'ACTIVE'; rung2Flag.className = 'rung-flag good';
+
+      rung3Code.textContent = '|--[ ]-- ROBOT_INTERLOCK -------( )-- MOTION_PERMIT --|';
+      rung3Flag.textContent = 'ENFORCED'; rung3Flag.className = 'rung-flag good';
+
+      statusHmi.textContent = 'SYSTEM HEALTHY';
+      hmiGreenLight.textContent = 'ALL SYSTEMS GREEN';
+      hmiGreenLight.className = 'hmi-green-light';
+      hmiEstop.textContent = 'MONITORED';
+      hmiSafety.textContent = 'SIL-3 NORMAL';
+      hmiSafety.style.color = '';
+
+      pipelineConsole.textContent = 'Normal signed baseline restored. Press "Execute Attestation Pipeline" to step through verification.';
+      resetPipelineSteps();
     }
+  });
 
-    ctx.beginPath();
-    const step = width / (state.latencyHistory.length - 1);
+  function resetPipelineSteps() {
+    pSteps.forEach(s => s.className = 'p-step');
+    pipelineStatusBadge.textContent = 'READY FOR VERIFICATION RUN';
+    pipelineStatusBadge.style.color = 'var(--cyan-scope)';
+  }
 
-    for (let i = 0; i < state.latencyHistory.length; i++) {
-      const lat = Math.min(40, state.latencyHistory[i]);
-      const x = i * step;
-      const y = height - (lat / 40.0 * (height - 30)) - 15;
-      if (i === 0) {
-        ctx.moveTo(x, y);
-      } else {
-        ctx.lineTo(x, y);
+  runPipelineBtn.addEventListener('click', () => {
+    if (state.pipelineRunning) return;
+    state.pipelineRunning = true;
+    resetPipelineSteps();
+
+    const tampered = state.isTampered;
+    const seq = [
+      { step: 0, text: '[STAGE 01] Generating cryptographic manifest: Hashing .ACD binary and canonical L5X XML. Binding controller hardware UUID and engineer private key.' },
+      { step: 1, text: tampered ? '[STAGE 02 GATE BLOCKED] Jump Host verified manifest signature: HASH MISMATCH DETECTED. Unapproved modifications found! Port 44818 channel locked.' : '[STAGE 02 GATEWAY] Jump Host verified ECDSA signature against corporate HSM certificate authority. Download channel approved.' },
+      { step: 2, text: tampered ? '[STAGE 03 DOWNLOAD ABORTED] Malicious package quarantined. Zero unverified bytes delivered to ControlLogix backplane.' : '[STAGE 03 CIP DOWNLOAD] Transmitting verified package over Port 44818 to 1756-L85E controller.' },
+      { step: 3, text: tampered ? '[STAGE 04 UPLOAD SKIPPED] No new image was downloaded.' : '[STAGE 04 POST-DOWNLOAD UPLOAD] Automatically reading back running compiled memory image from controller into isolated verification sandbox VM.' },
+      { step: 4, text: tampered ? '[STAGE 05 DIFF REPORT] Quarantined package diff: Rung 0001 (E-Stop) and Rung 0002 (Pressure Alarm) were bypassed.' : '[STAGE 05 CANONICAL L5X DIFF] Exporting uploaded memory image to canonical XML: Hash matches signed manifest 100.0%. Zero unauthorized rungs.' },
+      { step: 5, text: tampered ? '[STAGE 06 SECURITY INCIDENT] Attestation failed: Security alert dispatched to FactoryTalk DataMosaix SIEM. Incident logged to WORM storage.' : '[STAGE 06 WORM ATTESTATION] Cryptographic verification receipt committed to Write-Once-Read-Many immutable audit ledger. Controller approved for production.' }
+    ];
+
+    let idx = 0;
+    function runNext() {
+      if (idx > 0) {
+        const prev = pSteps[seq[idx - 1].step];
+        prev.classList.remove('active');
+        prev.classList.add(tampered && idx - 1 >= 1 ? 'bad' : 'good');
       }
+
+      if (idx >= seq.length) {
+        state.pipelineRunning = false;
+        if (tampered) {
+          pipelineStatusBadge.textContent = 'ATTEMPT QUARANTINED (EVIDENCE STORED)';
+          pipelineStatusBadge.style.color = '#F87171';
+          pipelineConsole.innerHTML = '<span style="color:#F87171; font-weight:700;">RELEASE BLOCKED:</span> The Signed Baseline Pipeline stopped the modified logic before it ever touched physical hardware. Cryptographic evidence preserved in WORM storage. This replaces manual "visual comparison" with automated mathematical proof.';
+          playAlarm();
+        } else {
+          pipelineStatusBadge.textContent = 'ATTESTATION COMPLETE (VERIFIED OK)';
+          pipelineStatusBadge.style.color = '#6EE7B7';
+          pipelineConsole.innerHTML = '<span style="color:#6EE7B7; font-weight:700;">VERIFICATION SUCCESSFUL:</span> Running PLC memory image matches the approved signed baseline 100%. Audit proof registered in WORM storage.';
+          playSuccess();
+        }
+        return;
+      }
+
+      const item = seq[idx];
+      const el = pSteps[item.step];
+      el.classList.add('active');
+      pipelineConsole.textContent = item.text;
+      playTone(400 + idx * 60, 0.08, 'sine');
+      idx++;
+      setTimeout(runNext, 700);
     }
-    ctx.stroke();
-    ctx.shadowBlur = 0; // Reset shadow
+    runNext();
+  });
 
-    // Glowing Lead Playhead Dot
-    const lastX = width - 2;
-    const lastY = height - (Math.min(40, state.currentLatency) / 40.0 * (height - 30)) - 15;
-    ctx.fillStyle = ctx.strokeStyle;
-    ctx.beginPath();
-    ctx.arc(lastX, lastY, 4, 0, Math.PI * 2);
-    ctx.fill();
+  // ==================== 8. SUITE 3: CVE-2026-9637 DOS ENGINE ====================
+  sendMalformedCipBtn.addEventListener('click', () => {
+    dosReadoutBox.innerHTML = '<span style="color:#F87171; font-weight:700;">MAJOR NONRECOVERABLE FAULT (MNRF) TRIGGERED!</span><br>Malformed CIP length header crashed firmware parser on Port 44818. Controller halted. Outputs safe-stated to 0. <strong>Requires physical on-site power cycle.</strong>';
+    playAlarm();
+  });
 
-    requestAnimationFrame(drawOscilloscope);
-  }
+  recoverControllerBtn.addEventListener('click', () => {
+    dosReadoutBox.innerHTML = 'Power cycle completed. Firmware v36.013 booted. Memory initialized. Controller status: RUNNING &bull; Health: OK &bull; Line: NOMINAL.';
+    playSuccess();
+  });
 
-  // ==================== 10. 30-SECOND GUIDED PRESENTATION MODE ====================
-  function stopGuidedDemo() {
-    if (state.demoInterval) {
-      clearInterval(state.demoInterval);
-      state.demoInterval = null;
-    }
-    guidedDemoBtn.classList.remove('running');
-    demoIcon.textContent = '▶';
-    demoText.textContent = '30s Auto Demo';
-    presentationHud.style.display = 'none';
-    state.demoElapsed = 0;
-  }
-
-  function startGuidedDemo() {
-    if (state.demoInterval) {
-      stopGuidedDemo();
+  // ==================== 9. AUTO PITCH TOUR (45 SECONDS) ====================
+  autoTourBtn.addEventListener('click', () => {
+    if (state.tourActive) {
+      stopAutoTour();
       return;
     }
+    startAutoTour();
+  });
 
-    initAudio();
-    guidedDemoBtn.classList.add('running');
-    demoIcon.textContent = '⏹';
-    demoText.textContent = 'Stop Demo';
-    presentationHud.style.display = 'flex';
-    state.demoElapsed = 0;
+  function startAutoTour() {
+    state.tourActive = true;
+    autoTourBtn.classList.add('highlight');
+    autoTourBtn.querySelector('.btn-lbl').textContent = 'Stop Tour';
 
-    logMessage('info', '=== [DEMO STARTED] 30-Second Guided Candidate Presentation Mode ===');
-    setMode('legacy');
-    hudPhaseTag.textContent = 'PHASE 1 / 3: LEGACY BROWNFIELD BASELINE';
-    hudPitch.textContent = "\"Sir/Ma'am, let us observe the legacy ControlLogix brownfield environment running unencrypted on Port 44818...\"";
-    const totalSeconds = 25;
+    const steps = [
+      { suite: 'motion', mode: 'legacy', time: 10000, script: '1/3: Observe the legacy ControlLogix brownfield. Unencrypted CIP is exposed on Port 44818 to maintain the 1ms motion limit...' },
+      { suite: 'motion', mode: 'tls', time: 11000, script: '2/3: Here is the naive fix: enabling standard TLS causes 32ms jitter spikes, tripping the 5ms hardware watchdog and burning $4,333/min...' },
+      { suite: 'motion', mode: 'shield', time: 11000, script: '3/3: CIP-Shield solves this with eBPF offload: 0.84ms latency, zero line stops, and $2.6M annual savings...' },
+      { suite: 'trust', tamper: true, time: 13000, script: 'Bonus: Now examine the Software Trust Gap (CISA AA26-097A). Gating downloads with signed baselines proves runtime logic matches approved code.' }
+    ];
 
-    state.demoInterval = setInterval(() => {
-      state.demoElapsed += 1;
-      const progressPct = Math.min(100, (state.demoElapsed / totalSeconds) * 100);
-      hudProgressFill.style.width = `${progressPct}%`;
-      const rem = Math.max(0, totalSeconds - state.demoElapsed);
-      hudTimer.textContent = `00:${rem < 10 ? '0' : ''}${rem}`;
-
-      // Sequence timeline
-      if (state.demoElapsed === 4) {
-        hudPhaseTag.textContent = 'PHASE 1 / 3: CYBER EXPLOIT INFILTRATION';
-        hudPitch.textContent = '"An attacker injects CVE-2024-6242 slot bypass over Port 44818, hijacking actuator setpoints and faulting the line..."';
-        triggerAttack();
-      } else if (state.demoElapsed === 9) {
-        hudPhaseTag.textContent = 'PHASE 2 / 3: NAIVE TLS RETROFIT FAILS';
-        hudPitch.textContent = '"Now we observe the Naive Fix: adding heavy TLS 1.3 encryption directly to the PLC CPU spikes latency to 32ms..."';
-        setMode('tls');
-      } else if (state.demoElapsed === 13) {
-        hudPitch.textContent = '"Because latency breaches 5.0ms, the Safety Watchdog trips! The plant freezes, losing $4,333 every minute..."';
-      } else if (state.demoElapsed === 17) {
-        hudPhaseTag.textContent = 'PHASE 3 / 3: CIP-SHIELD RESTORES PRODUCTION';
-        hudPitch.textContent = '"We activate Project CIP-Shield! The eBPF kernel fast-path offloads crypto in 13.82µs, restoring 0.84ms determinism with zero loss!"';
-        setMode('shield');
-      } else if (state.demoElapsed >= 25) {
-        logMessage('success', '=== [DEMO COMPLETE] CIP-Shield successfully demonstrated: Zero-Jitter + Total Security! ===');
-        stopGuidedDemo();
+    let currentIdx = 0;
+    function execTourStep() {
+      if (!state.tourActive || currentIdx >= steps.length) {
+        stopAutoTour();
+        return;
       }
-    }, 1000);
+      const st = steps[currentIdx];
+      switchSuite(st.suite);
+      if (st.mode) setMotionMode(st.mode);
+      if (st.tamper !== undefined) {
+        tamperToggle.checked = st.tamper;
+        tamperToggle.dispatchEvent(new Event('change'));
+      }
+      currentIdx++;
+      state.tourTimer = setTimeout(execTourStep, st.time);
+    }
+    execTourStep();
   }
 
-  guidedDemoBtn.addEventListener('click', startGuidedDemo);
+  function stopAutoTour() {
+    state.tourActive = false;
+    clearTimeout(state.tourTimer);
+    autoTourBtn.classList.remove('highlight');
+    autoTourBtn.querySelector('.btn-lbl').textContent = 'Auto Pitch';
+    switchSuite('motion');
+    setMotionMode('shield');
+  }
 
-  // Mode tab listeners
-  modeTabs.forEach(tab => {
-    tab.addEventListener('click', () => {
-      if (state.demoInterval) stopGuidedDemo();
-      setMode(tab.dataset.mode);
-    });
-  });
-
-  // Action buttons
-  triggerAttackBtn.addEventListener('click', () => {
-    if (state.demoInterval) stopGuidedDemo();
-    triggerAttack();
-  });
-
-  resetSimBtn.addEventListener('click', () => {
-    if (state.demoInterval) stopGuidedDemo();
-    setMode('shield');
-    logMessage('info', 'Simulation reset to baseline nominal CIP-Shield state.');
-    playClick();
-  });
-
-  // Modal Dialogs
-  openModalBtn.addEventListener('click', () => {
-    explainerModal.classList.add('active');
-    playClick();
-  });
-  closeModalBtn.addEventListener('click', () => {
-    explainerModal.classList.remove('active');
-    playClick();
-  });
-  explainerModal.addEventListener('click', (e) => {
-    if (e.target === explainerModal) explainerModal.classList.remove('active');
-  });
-
-  showQrBtn.addEventListener('click', () => {
-    qrModal.classList.add('active');
-    playClick();
-  });
-  closeQrModalBtn.addEventListener('click', () => {
-    qrModal.classList.remove('active');
-    playClick();
-  });
+  // ==================== 10. QR MODAL CONTROLS ====================
+  showQrBtn.addEventListener('click', () => qrModal.classList.add('open'));
+  closeQrModalBtn.addEventListener('click', () => qrModal.classList.remove('open'));
   qrModal.addEventListener('click', (e) => {
-    if (e.target === qrModal) qrModal.classList.remove('active');
+    if (e.target === qrModal) qrModal.classList.remove('open');
   });
 
-  // Initialize
-  setInterval(updateMetrics, 200);
-  requestAnimationFrame(drawOscilloscope);
-  setMode('shield');
+  // Start Rendering Loops
+  drawDigitalTwin();
+  drawScope();
+  updateCandidateHud();
 });
