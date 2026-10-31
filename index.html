@@ -2,633 +2,304 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>Rockwell Automation | Industrial Digital Twin & Cyber-Physical Trust Suite</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Rockwell Automation | CIP-Shield Digital Twin (Before vs After Demo)</title>
   <link rel="stylesheet" href="styles.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
-<body>
-  <div class="app-container">
-    <!-- TOP INDUSTRIAL HEADER -->
-    <header class="app-header">
-      <div class="brand-group">
-        <div class="rok-emblem">
-          <span class="rok-emblem-text">ROK</span>
-        </div>
-        <div class="brand-details">
-          <div class="brand-title-row">
-            <h1>ROCKWELL AUTOMATION</h1>
-            <span class="hub-pill">PUNE R&amp;D CENTER</span>
-            <span class="version-tag">STC v3.0-ENTERPRISE</span>
-          </div>
-          <p class="brand-subtitle">Cyber-Physical Industrial Digital Twin &bull; Allen-Bradley ControlLogix 5580 &bull; CIP Security Engine</p>
-        </div>
-      </div>
-      
-      <div class="header-controls">
-        <button id="toggleAudioBtn" class="icon-btn" title="Toggle Synthetic Audio Feedback">
-          <svg class="btn-svg" viewBox="0 0 24 24"><path fill="currentColor" d="M14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77zm-2.5 0L6.5 7.5H3v9h3.5l5 4.27V3.23zM16.5 12c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/></svg>
-          <span class="btn-lbl">Audio FX</span>
-        </button>
+<body class="mode-after">
 
-        <button id="showQrBtn" class="icon-btn highlight" title="Open on Smartphone">
-          <svg class="btn-svg" viewBox="0 0 24 24"><path fill="currentColor" d="M3 3h8v8H3V3zm2 2v4h4V5H5zm8-2h8v8h-8V3zm2 2v4h4V5h-4zM3 13h8v8H3v-8zm2 2v4h4v-4H5zm13-2h3v2h-3v-2zm-5 0h3v3h-3v-3zm2 5h3v3h-3v-3zm3-2h3v5h-5v-2h2v-3zm-5-3h2v2h-2v-2z"/></svg>
-          <span class="btn-lbl">Phone QR</span>
-        </button>
-
-        <button id="autoTourBtn" class="icon-btn auto-tour" title="Run 45-Second Interactive Candidate Pitch">
-          <svg class="btn-svg" viewBox="0 0 24 24"><path fill="currentColor" d="M8 5v14l11-7z"/></svg>
-          <span class="btn-lbl">Auto Pitch</span>
-        </button>
-
-        <div class="system-status-pill" id="overallStatusBadge">
-          <div class="status-pulse-dot" id="overallDot"></div>
-          <span id="overallStatusText">SYSTEM NOMINAL</span>
-        </div>
-      </div>
-    </header>
-
-    <!-- MAIN DOMAIN SUITE NAVIGATION -->
-    <nav class="domain-tabs-nav">
-      <button class="domain-tab active" data-suite="motion" id="tabSuiteMotion">
-        <span class="tab-step-num">01</span>
-        <div class="tab-copy">
-          <span class="tab-main-title">Real-Time CIP Motion &amp; Jitter</span>
-          <span class="tab-sub-title">1.0ms RPI &bull; eBPF vs TLS Watchdog Trip &bull; Downtime Loss</span>
-        </div>
-        <span class="tab-status-chip green">LIVE PHY</span>
-      </button>
-
-      <button class="domain-tab" data-suite="trust" id="tabSuiteTrust">
-        <span class="tab-step-num">02</span>
-        <div class="tab-copy">
-          <span class="tab-main-title">Logic Trust Gap &amp; Attestation</span>
-          <span class="tab-sub-title">CISA AA26-097A &bull; .ACD vs Runtime Logic &bull; Signed Baseline</span>
-        </div>
-        <span class="tab-status-chip blue">DEVSECOPS</span>
-      </button>
-
-      <button class="domain-tab" data-suite="dos" id="tabSuiteDos">
-        <span class="tab-step-num">03</span>
-        <div class="tab-copy">
-          <span class="tab-main-title">CIP Malformed Packet DoS</span>
-          <span class="tab-sub-title">CVE-2026-9637 &bull; Input Validation Fault &bull; Firmware Patching</span>
-        </div>
-        <span class="tab-status-chip red">CVE-2026-9637</span>
-      </button>
-
-      <button class="domain-tab" data-suite="pitch" id="tabSuitePitch">
-        <span class="tab-step-num">04</span>
-        <div class="tab-copy">
-          <span class="tab-main-title">Interview Pitch &amp; Architecture Deck</span>
-          <span class="tab-sub-title">Verbatim Spoken Scripts &bull; $2.6M ROI &bull; Systemic Defense</span>
-        </div>
-        <span class="tab-status-chip gold">CHET SHEET</span>
-      </button>
-    </nav>
-
-    <!-- CANDIDATE LIVE VERBAL PROMPT HUD -->
-    <div class="candidate-hud" id="candidateHud">
-      <div class="hud-header">
-        <div class="hud-tag">
-          <svg class="hud-mic-icon" viewBox="0 0 24 24"><path fill="currentColor" d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/><path fill="currentColor" d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/></svg>
-          <span>SAY THIS TO ROCKWELL INTERVIEWERS WHILE DEMONSTRATING:</span>
-        </div>
-        <div class="hud-phase-info" id="hudPhaseIndicator">SCENE 1 OF 3 &bull; REAL-TIME MOTION DETERMINISM</div>
-      </div>
-      <div class="hud-script-box" id="hudScriptText">
-        "Sir/Ma'am, in heavy manufacturing running Rockwell ControlLogix PLCs, high-speed robotic motion requires packet delivery in under 1.0 millisecond. When standard TLS encryption is enabled on legacy brownfield controllers, CPU overload causes 32ms jitter spikes, tripping the 5.0ms hardware watchdog and costing $4,333 per minute in plant downtime. Here is how CIP-Shield solves this with eBPF micro-crypto..."
+  <!-- TOP APP HEADER -->
+  <header class="app-header">
+    <div class="header-left">
+      <div class="brand-chip">ROCKWELL AUTOMATION</div>
+      <div class="header-title-group">
+        <h1>CIP-SHIELD <span class="twin-badge">CYBER-PHYSICAL DIGITAL TWIN</span></h1>
+        <p class="header-sub">Hinjewadi STC Pune &bull; Graduate Engineer Trainee Demonstration &bull; Batch 2027</p>
       </div>
     </div>
+    <div class="header-right">
+      <button class="nav-btn" id="autoDemoBtn" title="Play automatic 45-second interview story">
+        <span class="btn-icon">&#9658;</span> Play 45s Demo
+      </button>
+      <button class="nav-btn icon-btn" id="audioToggleBtn" title="Toggle industrial audio synthesizer">
+        <span id="audioIcon">&#128263;</span> Sound OFF
+      </button>
+      <button class="nav-btn icon-btn" id="qrBtn" title="Scan QR Code to open on phone">
+        <span>&#9638;</span> Mobile QR
+      </button>
+    </div>
+  </header>
 
-    <!-- ==================== SUITE 1: REAL-TIME MOTION & JITTER ==================== -->
-    <div class="suite-view active" id="viewSuiteMotion">
-      <!-- ARCHITECTURE MODE SUB-SELECTOR -->
-      <div class="architecture-subbar">
-        <div class="arch-selector-group">
-          <button class="arch-btn active" data-mode="shield" id="btnModeShield">
-            <span class="arch-tag green">PROPOSED</span>
-            <span class="arch-name">CIP-Shield Architecture</span>
-            <span class="arch-stat">0.84ms &bull; eBPF Kernel Fast-Path</span>
-          </button>
+  <!-- MAIN CONTAINER -->
+  <main class="main-layout">
+
+    <!-- HERO BEFORE VS AFTER TOGGLE -->
+    <section class="mode-selector-section">
+      <div class="selector-container">
+        
+        <!-- BEFORE CARD (THE FLAW) -->
+        <button class="mode-card mode-card-before" id="btnModeBefore">
+          <div class="card-radio-indicator"></div>
+          <div class="card-content">
+            <div class="card-tag tag-flaw">⚠️ BEFORE: THE PROBLEM</div>
+            <h2 class="card-title">Standard IT Security (TLS Retrofit)</h2>
+            <p class="card-desc">Heavy cryptographic software handshake adds <strong>32.2ms jitter</strong> &rarr; breaches <strong>5.0ms Watchdog</strong> &rarr; Robot E-stops &rarr; <strong>$4,333/min</strong> downtime loss.</p>
+          </div>
+          <div class="card-stat-pill stat-bad">
+            <span class="stat-value">32.2 ms</span>
+            <span class="stat-label">WATCHDOG TRIP</span>
+          </div>
+        </button>
+
+        <!-- AFTER CARD (THE PROPOSAL) -->
+        <button class="mode-card mode-card-after active" id="btnModeAfter">
+          <div class="card-radio-indicator"></div>
+          <div class="card-content">
+            <div class="card-tag tag-solution">🛡️ AFTER: MY PROPOSED SOLUTION</div>
+            <h2 class="card-title">CIP-Shield Fast-Path (eBPF Offload)</h2>
+            <p class="card-desc">Layer-2 cut-through authentication on NIC &rarr; <strong>0.84ms latency</strong> &rarr; 13.82&micro;s Poly1305 MAC &rarr; Smooth continuous motion &rarr; <strong>$2.6M saved/year</strong>.</p>
+          </div>
+          <div class="card-stat-pill stat-good">
+            <span class="stat-value">0.84 ms</span>
+            <span class="stat-label">DETERMINISTIC OK</span>
+          </div>
+        </button>
+
+      </div>
+    </section>
+
+    <!-- WORKSPACE 2-COLUMN GRID -->
+    <div class="showcase-grid">
+
+      <!-- LEFT COLUMN: CONTROLLOGIX & 3D ROBOT TWIN -->
+      <section class="visual-panel">
+        
+        <!-- CONTROLLOGIX 5580 CHASSIS BANNER -->
+        <div class="plc-chassis-bar">
+          <div class="chassis-header">
+            <div class="chassis-model">Allen-Bradley 1756 ControlLogix 5580</div>
+            <div class="chassis-dot-matrix">
+              <span class="dot-matrix-led" id="dotMatrixDisplay">RUN</span>
+            </div>
+          </div>
+
+          <div class="chassis-modules">
+            <!-- Slot 0: 1756-L85E CPU -->
+            <div class="plc-slot slot-cpu">
+              <div class="slot-label">SLOT 0: 1756-L85E</div>
+              <div class="slot-leds">
+                <span class="led-indicator led-run active" id="ledRun">RUN</span>
+                <span class="led-indicator led-ok active" id="ledOk">OK</span>
+                <span class="led-indicator led-flt" id="ledFlt">FLT</span>
+              </div>
+              <div class="key-switch-indicator">KEY: <span id="keySwitchState">RUN</span></div>
+            </div>
+
+            <!-- Slot 1: 1756-EN4TR Gigabit Adapter -->
+            <div class="plc-slot slot-enet">
+              <div class="slot-label">SLOT 1: 1756-EN4TR</div>
+              <div class="slot-leds">
+                <span class="led-indicator led-net active" id="ledNet">NET</span>
+                <span class="led-indicator led-link active" id="ledLink1">LNK1</span>
+                <span class="led-indicator led-link active" id="ledLink2">LNK2</span>
+              </div>
+              <div class="rate-badge">1 Gbps &bull; IEEE 1588 PTP</div>
+            </div>
+
+            <!-- Cycle Specs -->
+            <div class="chassis-specs">
+              <div>RPI: <strong>1.0 ms</strong></div>
+              <div>Watchdog: <strong>5.0 ms</strong></div>
+              <div>Load: <strong id="cpuLoadText">24% CPU</strong></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- CANVAS WORKCELL VIEWPORT -->
+        <div class="canvas-viewport-wrap">
+          <canvas id="twinCanvas" width="900" height="520"></canvas>
           
-          <button class="arch-btn" data-mode="legacy" id="btnModeLegacy">
-            <span class="arch-tag red">VULNERABLE</span>
-            <span class="arch-name">Legacy Brownfield</span>
-            <span class="arch-stat">Unencrypted Plaintext CIP &bull; CVE-2024-6242</span>
-          </button>
-
-          <button class="arch-btn" data-mode="tls" id="btnModeTls">
-            <span class="arch-tag amber">NAIVE FIX</span>
-            <span class="arch-name">Standard TLS Retrofit</span>
-            <span class="arch-stat">32.2ms Jitter &bull; Watchdog Trip Halt</span>
-          </button>
-        </div>
-
-        <div class="arch-controls">
-          <button id="infiltrateAttackBtn" class="action-btn red">
-            <svg class="btn-icon-svg" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2L1 21h22L12 2zm1 14h-2v-2h2v2zm0-4h-2V8h2v4z"/></svg>
-            Infiltrate Exploit Packet
-          </button>
-          <button id="resetMotionSimBtn" class="action-btn gray">
-            <svg class="btn-icon-svg" viewBox="0 0 24 24"><path fill="currentColor" d="M17.65 6.35A7.958 7.958 0 0012 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0112 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
-            Reset
-          </button>
-        </div>
-      </div>
-
-      <!-- MAIN SPLIT WORKSPACE -->
-      <div class="workspace-split">
-        <!-- LEFT COLUMN: DIGITAL TWIN & PACKET DUMP -->
-        <div class="workspace-col col-twin">
-          <div class="panel-card">
-            <div class="panel-card-header">
-              <div class="header-left">
-                <span class="section-num">01.1</span>
-                <h3>High-Fidelity Physical Cell &bull; Digital Twin Viewport</h3>
-              </div>
-              <span class="live-status-pill" id="cellStatusPill">CYCLE ACTIVE &bull; 450 UNITS/MIN</span>
+          <!-- DYNAMIC STATUS OVERLAY BANNER -->
+          <div class="viewport-overlay" id="viewportOverlay">
+            <div class="overlay-badge" id="overlayBadge">
+              <span class="badge-icon" id="overlayIcon">&#10003;</span>
+              <span class="badge-text" id="overlayText">CIP-SHIELD ACTIVE &bull; 0.84ms DETERMINISTIC MOTION NOMINAL</span>
             </div>
+          </div>
 
-            <!-- CANVAS DIGITAL TWIN WORKCELL -->
-            <div class="digital-twin-wrapper">
-              <canvas id="digitalTwinCanvas" width="640" height="260"></canvas>
-              
-              <!-- OVERLAY HARDWARE TELEMETRY BADGES -->
-              <div class="hardware-overlay-strip">
-                <div class="hw-badge">
-                  <span class="hw-label">PLC CONTROLLER</span>
-                  <span class="hw-val" id="hwPlcModel">ControlLogix 5580 (1756-L85E)</span>
-                </div>
-                <div class="hw-badge">
-                  <span class="hw-label">ETHERNET/IP ADAPTER</span>
-                  <span class="hw-val">1756-EN4TR Dual-Port 1Gbps</span>
-                </div>
-                <div class="hw-badge">
-                  <span class="hw-label">IEEE 1588 CIP SYNC</span>
-                  <span class="hw-val green" id="hwPtpSync">LOCKED (&plusmn;32ns)</span>
-                </div>
-                <div class="hw-badge">
-                  <span class="hw-label">ARM WORKCELL</span>
-                  <span class="hw-val" id="hwRobotStatus">WELDING (J1-J6 NOMINAL)</span>
-                </div>
-              </div>
-            </div>
-
-            <!-- INTERACTIVE PACKET INSPECTOR (WIRESHARK FORMAT) -->
-            <div class="packet-inspector-box">
-              <div class="inspector-top">
-                <div class="insp-title-row">
-                  <svg class="term-svg" viewBox="0 0 24 24"><path fill="currentColor" d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm-9 13H4v-2h7v2zm9-4H4v-2h16v2zm0-4H4V7h16v2z"/></svg>
-                  <span>ETHERNET/IP &bull; CIP ENCAPSULATION FRAME INSPECTOR (PORT 44818)</span>
-                </div>
-                <span class="packet-crc-chip" id="packetCrcBadge">CRC32: 0x94B2E1 &bull; VALID</span>
-              </div>
-
-              <!-- RAW HEX DUMP -->
-              <div class="hex-terminal">
-                <div class="hex-row-header">
-                  <span>OFFSET</span>
-                  <span class="hex-cols">00 01 02 03 04 05 06 07  08 09 0A 0B 0C 0D 0E 0F</span>
-                  <span>ASCII DECODE</span>
-                </div>
-                <div class="hex-byte-stream" id="hexStream">
-                  <!-- Dynamically populated -->
-                </div>
-              </div>
-
-              <!-- FIELD DECODE STRIP -->
-              <div class="field-decode-strip" id="fieldDecodeStrip">
-                <span class="field-tag">Active Encapsulation: SendRRData (0x006F)</span>
-                <span class="field-tag">CIP Service: Forward_Open (0x4E)</span>
-                <span class="field-tag">Backplane Path: Slot 0x02</span>
-                <span class="field-tag green" id="tagCryptoStatus">Poly1305 MAC Verified in 13.82&mu;s</span>
-              </div>
-            </div>
-
-            <!-- EVENT LOG -->
-            <div class="syslog-panel">
-              <div class="syslog-bar">
-                <span>DIAGNOSTIC BACKPLANE EVENT LOG</span>
-                <span class="live-pulse">LIVE STREAM</span>
-              </div>
-              <div class="syslog-body" id="syslogTerminal">
-                <div class="log-entry info">[SYS_INIT] Allen-Bradley 1756-L85E ControlLogix booted firmware v36.012.</div>
-                <div class="log-entry success">[CIP_SYNC] IEEE 1588 PTP Grandmaster lock achieved. Scheduled RPI: 1.000ms.</div>
-                <div class="log-entry info">[PROXY] CIP-Shield eBPF fast-path active on physical driver ring buffer.</div>
-              </div>
+          <!-- WORKCELL CONTROLS -->
+          <div class="viewport-quick-bar">
+            <span class="quick-title">Workcell: 6-Axis Welding Robot (FANUC / Rockwell Kinetix 5700 Servos)</span>
+            <div class="quick-actions">
+              <button class="btn-micro" id="btnToggleTamper">
+                <span id="tamperIcon">&#128275;</span> <span id="tamperText">Inject Logic Tampering (CISA)</span>
+              </button>
+              <button class="btn-micro" id="btnTriggerSpike">
+                <span>&#9889;</span> Inject 35ms Packet Lag
+              </button>
             </div>
           </div>
         </div>
 
-        <!-- RIGHT COLUMN: METRICS & KEYSIGHT OSCILLOSCOPE -->
-        <div class="workspace-col col-metrics">
-          <div class="panel-card">
-            <div class="panel-card-header">
-              <div class="header-left">
-                <span class="section-num">01.2</span>
-                <h3>Deterministic Telemetry &amp; Latency Oscilloscope</h3>
+      </section>
+
+      <!-- RIGHT COLUMN: THE 3 PROOF TILES -->
+      <section class="metrics-panel">
+        
+        <!-- PROOF TILE 1: LATENCY TIMELINE GAUGE -->
+        <div class="proof-card">
+          <div class="proof-card-header">
+            <h3>1. Cyclic Latency &amp; Watchdog Budget</h3>
+            <span class="chip-badge" id="latencyChipBadge">WITHIN 1.0ms RPI</span>
+          </div>
+
+          <div class="latency-main-display">
+            <div class="big-metric-num" id="currentLatencyVal">0.84 <span class="unit">ms</span></div>
+            <div class="latency-subtext" id="latencySubtext">91.6% Safety Margin below 5.0ms hardware trip</div>
+          </div>
+
+          <!-- HORIZONTAL LATENCY AXIS BAR -->
+          <div class="latency-axis-wrap">
+            <div class="axis-track">
+              <!-- Safe 1.0ms Zone -->
+              <div class="axis-safe-zone" style="width: 20%;" title="1.0ms RPI Target Loop">
+                <span class="zone-label">RPI: 1.0ms</span>
               </div>
-              <span class="target-chip">TARGET RPI: 1.0ms &bull; WATCHDOG: 5.0ms</span>
+              <!-- Watchdog Limit Line at 5.0ms -->
+              <div class="axis-watchdog-marker" style="left: 100%;" title="5.0ms Hardware Watchdog Trip Limit">
+                <span class="marker-label">Trip: 5.0ms</span>
+              </div>
+              <!-- Current Value Bar -->
+              <div class="axis-value-fill" id="latencyFillBar" style="width: 16.8%;"></div>
             </div>
-
-            <!-- 4 CORE INDUSTRIAL METRICS TILES -->
-            <div class="metrics-quad-grid">
-              <!-- METRIC 1: CYCLIC LATENCY -->
-              <div class="metric-tile" id="tileLatency">
-                <div class="tile-top">
-                  <span class="tile-label">CYCLIC LATENCY</span>
-                  <span class="tile-dot green" id="dotLatency"></span>
-                </div>
-                <div class="tile-number" id="valLatency">0.84 <span class="unit">ms</span></div>
-                <div class="tile-caption" id="subLatency">Deterministic Target &lt; 2.0ms</div>
-                <div class="tile-bar"><div class="tile-bar-fill" id="barLatency" style="width: 17%;"></div></div>
-              </div>
-
-              <!-- METRIC 2: CYCLIC JITTER -->
-              <div class="metric-tile" id="tileJitter">
-                <div class="tile-top">
-                  <span class="tile-label">CYCLIC JITTER (&Delta;T)</span>
-                  <span class="tile-dot green" id="dotJitter"></span>
-                </div>
-                <div class="tile-number" id="valJitter">&plusmn;0.04 <span class="unit">ms</span></div>
-                <div class="tile-caption" id="subJitter">Safety Trip at &gt; 5.0ms</div>
-                <div class="tile-bar"><div class="tile-bar-fill" id="barJitter" style="width: 2%;"></div></div>
-              </div>
-
-              <!-- METRIC 3: PLC CPU LOAD -->
-              <div class="metric-tile" id="tileCpu">
-                <div class="tile-top">
-                  <span class="tile-label">CONTROLLOGIX CPU LOAD</span>
-                  <span class="tile-dot green" id="dotCpu"></span>
-                </div>
-                <div class="tile-number" id="valCpu">24 <span class="unit">%</span></div>
-                <div class="tile-caption" id="subCpu">Scan Time: 0.22ms (Ladder Logic)</div>
-                <div class="tile-bar"><div class="tile-bar-fill" id="barCpu" style="width: 24%;"></div></div>
-              </div>
-
-              <!-- METRIC 4: PLANT DOWNTIME LOSS -->
-              <div class="metric-tile loss" id="tileLoss">
-                <div class="tile-top">
-                  <span class="tile-label">PLANT DOWNTIME LOSS</span>
-                  <span class="tile-dot green" id="dotLoss"></span>
-                </div>
-                <div class="tile-number loss-red" id="valLoss">$0.00</div>
-                <div class="tile-caption">Loss Rate: $4,333/min ($260K/hr)</div>
-                <div class="tile-bar"><div class="tile-bar-fill loss-fill" id="barLoss" style="width: 0%;"></div></div>
-              </div>
+            <div class="axis-legend">
+              <span>0 ms</span>
+              <span>1.0 ms (RPI)</span>
+              <span>2.5 ms</span>
+              <span>5.0 ms (Watchdog Trip)</span>
             </div>
+          </div>
 
-            <!-- KEYSIGHT OSCILLOSCOPE CHASSIS -->
-            <div class="scope-chassis">
-              <div class="scope-topbar">
-                <div class="scope-brand">
-                  <span class="scope-mfg">KEYSIGHT</span>
-                  <span class="scope-model">InfiniiVision MSOX6004A &bull; 6 GHz &bull; 20 GSa/s</span>
-                </div>
-                <div class="scope-channel-tags">
-                  <span class="ch-badge ch1">CH1: CIP RPI (1ms)</span>
-                  <span class="ch-badge math">MATH: &Delta;T JITTER</span>
-                  <span class="ch-badge trig">TRIG: POS EDGE (5.0ms)</span>
-                </div>
-              </div>
-
-              <div class="scope-screen-wrapper">
-                <canvas id="scopeCanvas" width="600" height="230"></canvas>
-                <div class="scope-overlay-readouts">
-                  <div class="scope-hud-val">FREQ: <strong>1.000 kHz</strong></div>
-                  <div class="scope-hud-val">PK-PK: <strong id="scopePkPk">0.88 ms</strong></div>
-                  <div class="scope-hud-val">JITTER RMS: <strong id="scopeRms">0.038 ms</strong></div>
-                  <div class="scope-hud-val">EYE OPENING: <strong id="scopeEye">98.2%</strong></div>
-                </div>
-              </div>
-
-              <div class="scope-control-bar">
-                <div class="scope-ctrl">TIMEBASE: <strong>1.00 ms/div</strong></div>
-                <div class="scope-ctrl">HORIZ POS: <strong>0.00 &mu;s</strong></div>
-                <div class="scope-ctrl">SCALE: <strong>10.0 ms/div</strong></div>
-                <div class="scope-ctrl">PHOSPHOR: <strong>PERSISTENCE ON (350ms)</strong></div>
-              </div>
+          <!-- BENCHMARK COMPARISON -->
+          <div class="crypto-spec-row">
+            <div class="spec-col">
+              <span class="spec-k">Per-Frame Crypto:</span>
+              <strong class="spec-v" id="cryptoSpeedText">13.82 &micro;s (Poly1305)</strong>
             </div>
-
-            <!-- INDUSTRIAL CALLOUT ACCORDION -->
-            <div class="industrial-callout">
-              <div class="callout-head">
-                <span class="callout-badge">THE DETERMINISTIC SECURITY DILEMMA</span>
-                <span class="callout-sub">Why Traditional IT Encryption Halts Factory Floors</span>
-              </div>
-              <p class="callout-body">
-                Standard TLS handshakes consume <strong>30ms to 45ms</strong> of crypto compute. On an office server, 40ms is imperceptible. In a robotic cell running an <strong>RPI of 1.0ms</strong>, a 30ms latency spike breaches the hardware watchdog timer (5.0ms limit), triggering an emergency <strong>SIL-3 Category 0 E-Stop</strong>. Plant managers are forced to choose between unencrypted cyber vulnerability or catastrophic production halts. <strong>CIP-Shield eliminates this dilemma via eBPF hardware offload.</strong>
-              </p>
+            <div class="spec-col">
+              <span class="spec-k">Jitter Variance:</span>
+              <strong class="spec-v" id="jitterText">&plusmn;0.04 ms</strong>
+            </div>
+            <div class="spec-col">
+              <span class="spec-k">Watchdog Trips:</span>
+              <strong class="spec-v" id="tripsCountText">0 Faults</strong>
             </div>
           </div>
         </div>
-      </div>
+
+        <!-- PROOF TILE 2: FINANCIAL LOSS ACCUMULATOR -->
+        <div class="proof-card">
+          <div class="proof-card-header">
+            <h3>2. Factory Downtime &amp; Business Impact</h3>
+            <span class="chip-badge badge-green" id="financeChipBadge">$2.60M SAVED / YR</span>
+          </div>
+
+          <div class="finance-display-grid">
+            <div class="finance-metric-box">
+              <span class="fin-label">Unplanned Downtime Cost Rate</span>
+              <span class="fin-value-red">$4,333 <small>/ minute</small></span>
+              <span class="fin-sub">($260,000 / hour automotive body shop)</span>
+            </div>
+            <div class="finance-metric-box">
+              <span class="fin-label">Session Downtime Incurred</span>
+              <span class="fin-value-dynamic" id="sessionLossVal">$0.00</span>
+              <span class="fin-sub" id="sessionLossSub">Zero line stoppage under CIP-Shield</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- PROOF TILE 3: CISA AA26-097A LOGIC ATTESTATION -->
+        <div class="proof-card">
+          <div class="proof-card-header">
+            <h3>3. Software Trust Gap (CISA AA26-097A)</h3>
+            <span class="chip-badge" id="cisaStatusBadge">HASH ATTESTED (MATCH)</span>
+          </div>
+
+          <div class="hash-compare-grid">
+            <div class="hash-box">
+              <span class="hash-label">Approved Studio 5000 .ACD Baseline:</span>
+              <code class="hash-code" id="hashAcd">SHA-256: 0x9E7F42C1B80A...</code>
+            </div>
+            <div class="hash-box">
+              <span class="hash-label">ControlLogix Flash Runtime Logic:</span>
+              <code class="hash-code" id="hashPlc">SHA-256: 0x9E7F42C1B80A...</code>
+            </div>
+          </div>
+
+          <!-- 6-STAGE COMPACT PIPELINE STATUS -->
+          <div class="pipeline-track" id="pipelineTrack">
+            <div class="pipe-node active" title="Stage 01: Canonical L5X Hashing">01 SIGN</div>
+            <div class="pipe-node active" title="Stage 02: Hardened Jump Host Download Gate">02 GATE</div>
+            <div class="pipe-node active" title="Stage 03: Backplane CIP Download">03 DWNLD</div>
+            <div class="pipe-node active" title="Stage 04: Verification Sandbox Upload">04 UPLD</div>
+            <div class="pipe-node active" title="Stage 05: AST Canonical Ladder Diff">05 DIFF</div>
+            <div class="pipe-node active" title="Stage 06: WORM Audit Attestation">06 WORM</div>
+          </div>
+          <div class="pipeline-status-text" id="pipelineStatusText">
+            All 6 stages verified: Controller flash matches signed baseline. No stealth logic modifications detected.
+          </div>
+        </div>
+
+      </section>
+
     </div>
 
-    <!-- ==================== SUITE 2: SOFTWARE TRUST GAP & ATTESTATION ==================== -->
-    <div class="suite-view" id="viewSuiteTrust">
-      <div class="trust-hero-card">
-        <div class="trust-hero-content">
-          <span class="trust-kicker">CISA ADVISORY AA26-097A CASE STUDY</span>
-          <h2>The Software Supply Chain Gap: <span>Approved Logic vs. Running Logic</span></h2>
-          <p class="trust-desc">
-            Adversaries compromise legitimate engineering workstations running <strong>Studio 5000 Logix Designer</strong>. They alter the <code>project.acd</code> file, disabling emergency shutdown and alarm routines, while leaving operator SCADA screens displaying a deceptive "NORMAL" state. <strong>CISA's current mitigation advice is to "visually inspect" ladder logic.</strong> This proposal introduces a cryptographically verified baseline pipeline.
+    <!-- CANDIDATE VERBAL SCRIPT HUD (WHAT TO SAY TO THE INTERVIEWER) -->
+    <section class="interviewer-hud-section">
+      <div class="hud-card">
+        <div class="hud-header">
+          <div class="hud-title-badge">
+            <span class="hud-icon">&#128483;</span>
+            <span>WHAT TO SAY TO THE INTERVIEWER RIGHT NOW (YOUR SCRIPT)</span>
+          </div>
+          <div class="hud-role-tag">Rockwell GET (IT) Interview Talking Point</div>
+        </div>
+        <div class="hud-body">
+          <p class="hud-quote" id="hudScriptText">
+            "Sir/Ma'am, in automotive welding cells, motion axes demand a strict 1.0 ms Requested Packet Interval (RPI). Today, applying standard IT encryption like TLS introduces 32 ms of cryptographic lag, blowing past the 5.0 ms watchdog and causing violent emergency stops. With my proposed CIP-Shield architecture, we terminate authentication at Layer 2 using eBPF/XDP: latency drops to 0.84 ms, zero watchdog trips occur, and plant floors save $2.6 Million annually."
           </p>
-        </div>
-        <div class="trust-hero-actions">
-          <div class="tamper-toggle-card">
-            <span class="toggle-title">Simulate Workstation File Tampering</span>
-            <label class="switch-control">
-              <input type="checkbox" id="tamperToggle">
-              <span class="switch-slider"></span>
-            </label>
-          </div>
-          <button id="runPipelineBtn" class="action-btn green large">
-            <svg class="btn-icon-svg" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/></svg>
-            Execute Attestation Pipeline
-          </button>
-        </div>
-      </div>
-
-      <!-- WORKSTATION -> PLC -> HMI ARCHITECTURAL STAGE -->
-      <div class="trust-architecture-grid">
-        <!-- NODE 1: WORKSTATION -->
-        <div class="trust-node-card" id="trustNodeWorkstation">
-          <div class="t-node-header">
-            <span class="t-node-tag">ENGINEERING STATION</span>
-            <span class="t-node-status good" id="statusWorkstation">APPROVED FILE</span>
-          </div>
-          <div class="t-node-body">
-            <div class="file-icon-row">
-              <svg class="file-svg" viewBox="0 0 24 24"><path fill="currentColor" d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
-              <div>
-                <strong id="acdFileName">Plant_Cell_Line04.ACD</strong>
-                <span class="file-meta" id="acdFileHash">SHA-256: 8a4f...31c2 (Signed)</span>
-              </div>
-            </div>
-            <p class="t-node-desc">Engineering workstation running Studio 5000 Logix Designer. Approved by lead systems engineer.</p>
-          </div>
-        </div>
-
-        <!-- ARROW 1 -->
-        <div class="t-connector-arrow">
-          <div class="arrow-line"></div>
-          <span class="arrow-lbl">CIP Download</span>
-        </div>
-
-        <!-- NODE 2: RUNNING CONTROLLER LOGIC -->
-        <div class="trust-node-card" id="trustNodeController">
-          <div class="t-node-header">
-            <span class="t-node-tag">CONTROLLOGIX 5580</span>
-            <span class="t-node-status good" id="statusPlcLogic">RUNNING APPROVED</span>
-          </div>
-          <div class="t-node-body">
-            <div class="ladder-logic-preview">
-              <div class="ladder-rung">
-                <span class="rung-num">RUNG 0001:</span>
-                <span class="rung-code" id="rung1Code">|--[ ]-- E-STOP_HEALTHY -------( )-- SAFE_ENABLE --|</span>
-                <span class="rung-flag good" id="rung1Flag">ARMED</span>
-              </div>
-              <div class="ladder-rung">
-                <span class="rung-num">RUNG 0002:</span>
-                <span class="rung-code" id="rung2Code">|--[/]-- OVER_PRESSURE_HIGH ---( )-- TRIP_ALARM --|</span>
-                <span class="rung-flag good" id="rung2Flag">ACTIVE</span>
-              </div>
-              <div class="ladder-rung">
-                <span class="rung-num">RUNG 0003:</span>
-                <span class="rung-code" id="rung3Code">|--[ ]-- ROBOT_INTERLOCK -------( )-- MOTION_PERMIT --|</span>
-                <span class="rung-flag good" id="rung3Flag">ENFORCED</span>
-              </div>
-            </div>
-            <p class="t-node-desc">Physical key switch in <strong>RUN</strong> position. Note: RUN blocks remote writes, but locks in whatever altered logic was already downloaded!</p>
-          </div>
-        </div>
-
-        <!-- ARROW 2 -->
-        <div class="t-connector-arrow">
-          <div class="arrow-line"></div>
-          <span class="arrow-lbl">HMI Tag Poll</span>
-        </div>
-
-        <!-- NODE 3: OPERATOR SCADA VIEW -->
-        <div class="trust-node-card" id="trustNodeHmi">
-          <div class="t-node-header">
-            <span class="t-node-tag">OPERATOR SCADA / MES</span>
-            <span class="t-node-status good" id="statusHmi">SYSTEM HEALTHY</span>
-          </div>
-          <div class="t-node-body">
-            <div class="hmi-screen-mock">
-              <div class="hmi-screen-header">
-                <span>FactoryTalk View SE &bull; Assembly Cell 04</span>
-                <span class="hmi-green-light" id="hmiGreenLight">ALL SYSTEMS GREEN</span>
-              </div>
-              <div class="hmi-readout-grid">
-                <div class="hmi-cell"><span>PRESSURE:</span> <strong id="hmiPressure">142 PSI (OK)</strong></div>
-                <div class="hmi-cell"><span>E-STOP:</span> <strong id="hmiEstop">MONITORED</strong></div>
-                <div class="hmi-cell"><span>SAFETY:</span> <strong id="hmiSafety">SIL-3 NORMAL</strong></div>
-              </div>
-            </div>
-            <p class="t-node-desc alert-text" id="hmiBlindspotWarning">
-              The operator sees a completely calm screen even when safety interlocks have been silently bypassed!
-            </p>
+          <div class="hud-keywords">
+            <span class="kw-label">Keywords to mention:</span>
+            <span class="kw-chip">1.0ms RPI</span>
+            <span class="kw-chip">5.0ms Watchdog</span>
+            <span class="kw-chip">eBPF / XDP Fast-Path</span>
+            <span class="kw-chip">Poly1305 (13.82 &micro;s)</span>
+            <span class="kw-chip">ControlLogix 5580</span>
+            <span class="kw-chip">CISA AA26-097A</span>
+            <span class="kw-chip">$2.6M ROI</span>
           </div>
         </div>
       </div>
+    </section>
 
-      <!-- 6-STEP SIGNED BASELINE PIPELINE -->
-      <div class="pipeline-card">
-        <div class="pipeline-header">
-          <h4>6-Stage Cryptographic Attestation Pipeline (Proposed Architecture)</h4>
-          <span class="pipeline-status-badge" id="pipelineStatusBadge">READY FOR VERIFICATION RUN</span>
-        </div>
+  </main>
 
-        <div class="pipeline-steps-grid">
-          <div class="p-step" id="pStep1">
-            <span class="p-num">01</span>
-            <strong>Sign Manifest</strong>
-            <p>Hash .ACD + canonical L5X XML, bind controller ID, approver cert, and timestamp.</p>
-          </div>
-          <div class="p-step" id="pStep2">
-            <span class="p-num">02</span>
-            <strong>Gate Download</strong>
-            <p>Air-gapped jump host verifies signed manifest before opening Port 44818 channel.</p>
-          </div>
-          <div class="p-step" id="pStep3">
-            <span class="p-num">03</span>
-            <strong>CIP Download</strong>
-            <p>Compile and download verified package directly to ControlLogix backplane.</p>
-          </div>
-          <div class="p-step" id="pStep4">
-            <span class="p-num">04</span>
-            <strong>Upload from PLC</strong>
-            <p>Immediately read back compiled memory image into clean verification sandbox VM.</p>
-          </div>
-          <div class="p-step" id="pStep5">
-            <span class="p-num">05</span>
-            <strong>Canonical L5X Diff</strong>
-            <p>Export uploaded runtime image to L5X, hash, and diff against signed baseline.</p>
-          </div>
-          <div class="p-step" id="pStep6">
-            <span class="p-num">06</span>
-            <strong>WORM Attestation</strong>
-            <p>Record cryptographic proof in Write-Once-Read-Many log and notify SIEM.</p>
-          </div>
-        </div>
-
-        <div class="pipeline-readout-console" id="pipelineConsole">
-          Press "Execute Attestation Pipeline" to step through the cryptographic verification sequence.
-        </div>
+  <!-- QR CODE MODAL FOR MOBILE MIRRORING -->
+  <div class="modal-backdrop" id="qrModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>Open Live Interactive Twin on Smartphone</h3>
+        <button class="modal-close" id="closeQrBtn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAASgAAAEoAQAAAADDfFG0AAAB80lEQVR4nO1ay2oEMQyTyvz/L6sHKY/ZXvYUG5osCzsTQYVwbDkuhS/Wzzegi7qoP+sB6F8CKEJ5FrV2urIv0QsCAEY4Wiq/HTtd2dfoBW7RBQoiopp32rIvRgnMgZQSXC14tUX5RIqgY6wLrz6oB5iRRIggQIGgtp2u7Gv0GpEk53o632MVyLbsS/SaeWoIZdGgtdOV/XkUBTpVvSpkfEXet2VfgyIkxUkAIDiFinKd2Z9FOd9TsJHwF44xQhSpvuxLzqPr4jyH8anKFm4/9IGiQImph9PdE9Ped2ZfgXKmEgAynWRiTc75rdmfRjlfEbQ+xDATfoWbv94oglguLL4rJTKB1ph9AWrLV0TiSslk0vUTHyjlNkKIOlMrRsbO7A+j0iqmKK6TOZpHO42u7MvyVxJ8br4AgM70VrIx+xKUyHGDw5H+o9utj6/1ANg6bD8Qgqh1r9OVfRmKTAqz49LWEN3+8Q9KkIZ3GJ9ZCm7+ei1pa4ckyf5Cy79C6sq+yk/4J+Z917AXjq6bv9ba5tvasr7fzZlHV/Y19TGWNepwKhjhbn3c1jbfXgcy94bD4PdlX46KiYi70DiZ5bzaoJ7Xk9ww+sY1F/g1vFqjpPnPOJl3pCnyvLs5+6Oobb49Rh8Zf6yhZF/2pf7r0F+8qP+E+gVCJ/NHDV8koQAAAABJRU5ErkJggg==" alt="Scan QR Code" class="qr-img">
+        <p class="qr-instructions">Scan with your smartphone camera to run and interact with this live digital twin during your interview.</p>
+        <div class="qr-link-box">https://divyansh9704.github.io/rockwell-cip-shield-simulation/</div>
       </div>
     </div>
-
-    <!-- ==================== SUITE 3: CVE-2026-9637 MALFORMED DOS ==================== -->
-    <div class="suite-view" id="viewSuiteDos">
-      <div class="dos-hero-card">
-        <div class="dos-badge">ICSA-26-244-03 / CVE-2026-9637</div>
-        <h2>ControlLogix CIP Message Input Validation Flaw (Denial of Service)</h2>
-        <p class="dos-lead">
-          <strong>CVSS Score: 7.5 High (v3.1) / 8.7 High (v4.0)</strong> &bull; Impact: Complete Loss of Controller Availability (C:N / I:N / A:H).
-        </p>
-        <p class="dos-body">
-          A malformed CIP packet with an invalid payload length header triggers a <strong>Major Nonrecoverable Fault (MNRF)</strong> in Logix 5580 and 5380 controllers. The controller halts all motion and requires a physical on-site power cycle. This is an <strong>availability bug</strong>, fundamentally separate from project-file logic tampering.
-        </p>
-      </div>
-
-      <div class="dos-grid">
-        <div class="dos-card">
-          <h4>Vulnerability Mechanics</h4>
-          <p>The controller's firmware CIP parser failed to properly validate the length field of incoming encapsulation packets. An attacker sends a crafted frame with length greater than allocated buffer space, causing a memory dereference fault.</p>
-          <div class="dos-interactive-box">
-            <button id="sendMalformedCipBtn" class="action-btn red large">
-              <svg class="btn-icon-svg" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2L1 21h22L12 2zm1 14h-2v-2h2v2zm0-4h-2V8h2v4z"/></svg>
-              Transmit Malformed CIP Packet
-            </button>
-            <button id="recoverControllerBtn" class="action-btn gray large">
-              <svg class="btn-icon-svg" viewBox="0 0 24 24"><path fill="currentColor" d="M17.65 6.35A7.958 7.958 0 0012 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0112 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
-              Power Cycle / Recover Controller
-            </button>
-          </div>
-          <div class="dos-readout" id="dosReadoutBox">
-            Controller status: RUNNING &bull; Health: OK &bull; Assembly Line: NOMINAL
-          </div>
-        </div>
-
-        <div class="dos-card">
-          <h4>Firmware Patch Matrix (Verified Rockwell Fixes)</h4>
-          <table class="firmware-table">
-            <thead>
-              <tr>
-                <th>Hardware Family</th>
-                <th>Vulnerable Revisions</th>
-                <th>Patched Firmware (Deploy These)</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td><strong>ControlLogix 5580</strong></td>
-                <td>v32.011 - v36.011</td>
-                <td><span class="patch-chip">v36.013+ &bull; v37.011+</span></td>
-              </tr>
-              <tr>
-                <td><strong>CompactLogix 5380</strong></td>
-                <td>v33.012 - v35.012</td>
-                <td><span class="patch-chip">v34.015+ &bull; v35.014+</span></td>
-              </tr>
-              <tr>
-                <td><strong>GuardLogix 5580 (Safety)</strong></td>
-                <td>v32.011 - v36.011</td>
-                <td><span class="patch-chip">v36.013+ &bull; v37.011+</span></td>
-              </tr>
-            </tbody>
-          </table>
-          <div class="dos-callout">
-            <strong>Key Interview Distinction:</strong> "CVE-2026-9637 is patched by upgrading controller firmware. Project-file tampering under CISA AA26-097A cannot be fixed by firmware alone; it requires workflow cryptographic manifest signing."
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ==================== SUITE 4: INTERVIEW PITCH & ARCHITECTURE DECK ==================== -->
-    <div class="suite-view" id="viewSuitePitch">
-      <div class="deck-grid">
-        <div class="deck-card">
-          <div class="deck-badge">ELEVATOR PITCH</div>
-          <h3>How to Present This in 60 Seconds</h3>
-          <div class="script-quote">
-            "Sir/Ma'am, in industrial automation, security can never come at the expense of deterministic physics. Today, over 75% of Rockwell's global installed base runs unencrypted because enabling standard TLS introduces 32ms of jitter, tripping the 5.0ms hardware watchdog. At the same time, CISA advisories like AA26-097A prove that adversaries are tampering with Studio 5000 project files without operators noticing.<br><br>
-            My solution bridges both planes: <strong>At runtime</strong>, CIP-Shield uses Linux eBPF to offload cryptography, keeping cyclic latency under 1.0ms. <strong>At the software engineering plane</strong>, our Signed Baseline Pipeline cryptographically binds approved .ACD files to running PLC logic. This saves $2.6 Million per year in unplanned downtime while establishing true Zero-Trust across Rockwell's brownfield infrastructure."
-          </div>
-        </div>
-
-        <div class="deck-card">
-          <div class="deck-badge">THE 3 ANOMALY DISTINCTIONS</div>
-          <h3>Keep These 3 Flaws Crystal Clear</h3>
-          <ul class="deck-list">
-            <li>
-              <strong>1. Project-File Tampering (CISA AA26-097A):</strong> Adversary modifies <code>.ACD</code> file to disable shutdown rungs. HMI still reads "NORMAL". <em>Fix: Signed Manifest &amp; L5X Diff.</em>
-            </li>
-            <li>
-              <strong>2. CIP Malformed Length DoS (CVE-2026-9637):</strong> Bad length header crashes PLC into Major Nonrecoverable Fault. <em>Fix: Firmware upgrade to v36.013/v37.011.</em>
-            </li>
-            <li>
-              <strong>3. The Jitter Watchdog Trip:</strong> Enabling naive TLS causes 32ms CPU crypto lag, tripping the 5ms hardware safety watchdog. <em>Fix: CIP-Shield eBPF hardware proxy.</em>
-            </li>
-          </ul>
-        </div>
-
-        <div class="deck-card full-width">
-          <div class="deck-badge">BUSINESS ROI &amp; SCALE METRICS</div>
-          <h3>Quantitative Financial &amp; Technical Proof Points</h3>
-          <div class="stats-row">
-            <div class="stat-box">
-              <span class="stat-num">$4,333 / min</span>
-              <span class="stat-label">Automotive Line Downtime Cost ($260K/hr)</span>
-            </div>
-            <div class="stat-box">
-              <span class="stat-num">&lt; 1.0 ms</span>
-              <span class="stat-label">Hard Deterministic Motion Limit</span>
-            </div>
-            <div class="stat-box">
-              <span class="stat-num">13.82 &mu;s</span>
-              <span class="stat-label">eBPF Kernel XDP Verification Speed</span>
-            </div>
-            <div class="stat-box">
-              <span class="stat-num">85%</span>
-              <span class="stat-label">Bugs Caught via Digital Twin Simulation (Emulate3D)</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- QR CODE MODAL FOR MOBILE DEMOS -->
-    <div class="modal-backdrop" id="qrModal">
-      <div class="modal-card">
-        <div class="modal-header">
-          <h3>Open Live Interactive Digital Twin on Smartphone</h3>
-          <button class="modal-close" id="closeQrModalBtn">&times;</button>
-        </div>
-        <div class="modal-body qr-center">
-          <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAASgAAAEoAQAAAADDfFG0AAAB80lEQVR4nO1ay2oEMQyTyvz/L6sHKY/ZXvYUG5osCzsTQYVwbDkuhS/Wzzegi7qoP+sB6F8CKEJ5FrV2urIv0QsCAEY4Wiq/HTtd2dfoBW7RBQoiopp32rIvRgnMgZQSXC14tUX5RIqgY6wLrz6oB5iRRIggQIGgtp2u7Gv0GpEk53o632MVyLbsS/SaeWoIZdGgtdOV/XkUBTpVvSpkfEXet2VfgyIkxUkAIDiFinKd2Z9FOd9TsJHwF44xQhSpvuxLzqPr4jyH8anKFm4/9IGiQImph9PdE9Ped2ZfgXKmEgAynWRiTc75rdmfRjlfEbQ+xDATfoWbv94oglguLL4rJTKB1ph9AWrLV0TiSslk0vUTHyjlNkKIOlMrRsbO7A+j0iqmKK6TOZpHO42u7MvyVxJ8br4AgM70VrIx+xKUyHGDw5H+o9utj6/1ANg6bD8Qgqh1r9OVfRmKTAqz49LWEN3+8Q9KkIZ3GJ9ZCm7+ei1pa4ckyf5Cy79C6sq+yk/4J+Z917AXjq6bv9ba5tvasr7fzZlHV/Y19TGWNepwKhjhbn3c1jbfXgcy94bD4PdlX46KiYi70DiZ5bzaoJ7Xk9ww+sY1F/g1vFqjpPnPOJl3pCnyvLs5+6Oobb49Rh8Zf6yhZF/2pf7r0F+8qP+E+gVCJ/NHDV8koQAAAABJRU5ErkJggg==" alt="Scan QR Code" class="qr-img">
-          <p class="qr-desc">Scan with your smartphone camera to mirror and control this live digital twin during your interview.</p>
-          <div class="qr-url">https://divyansh9704.github.io/rockwell-cip-shield-simulation/</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ENTERPRISE FOOTER -->
-    <footer class="app-footer">
-      <div class="footer-col">
-        <strong>Rockwell Automation India Software Technology Center (STC)</strong>
-        <span>Campus Placement Drive 2026/2027 &bull; Graduate Engineer Trainee (GET - IT)</span>
-      </div>
-      <div class="footer-col right">
-        <span>Hinjewadi Phase 2, Pune R&amp;D Center &bull; High-Fidelity Cyber-Physical Digital Twin</span>
-      </div>
-    </footer>
   </div>
 
   <script src="app.js"></script>
