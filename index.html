@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Rockwell Automation | CIP-Shield Digital Twin (Before vs After Demo)</title>
+  <title>Rockwell Automation | CIP-Shield Digital Twin (Interview Presentation)</title>
   <link rel="stylesheet" href="styles.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -17,17 +17,14 @@
       <div class="brand-chip">ROCKWELL AUTOMATION</div>
       <div class="header-title-group">
         <h1>CIP-SHIELD <span class="twin-badge">CYBER-PHYSICAL DIGITAL TWIN</span></h1>
-        <p class="header-sub">Hinjewadi STC Pune &bull; Graduate Engineer Trainee Demonstration &bull; Batch 2027</p>
+        <p class="header-sub">India STC &bull; Hinjewadi Phase 2, Pune &bull; GET (IT) Placement Demonstration</p>
       </div>
     </div>
     <div class="header-right">
-      <button class="nav-btn" id="autoDemoBtn" title="Play automatic 45-second interview story">
-        <span class="btn-icon">&#9658;</span> Play 45s Demo
-      </button>
-      <button class="nav-btn icon-btn" id="audioToggleBtn" title="Toggle industrial audio synthesizer">
+      <button class="nav-btn" id="audioToggleBtn" title="Toggle synthesized industrial audio">
         <span id="audioIcon">&#128263;</span> Sound OFF
       </button>
-      <button class="nav-btn icon-btn" id="qrBtn" title="Scan QR Code to open on phone">
+      <button class="nav-btn icon-btn" id="qrBtn" title="Scan QR Code to open on smartphone">
         <span>&#9638;</span> Mobile QR
       </button>
     </div>
@@ -35,6 +32,31 @@
 
   <!-- MAIN CONTAINER -->
   <main class="main-layout">
+
+    <!-- 3-STEP PRESENTER STORYBOARD BAR (EFFORTLESS 60-SECOND PRESENTATION) -->
+    <section class="storyboard-section">
+      <div class="storyboard-header">
+        <span class="story-label">&#128073; 3-STEP INTERVIEW STORYTELLER (CLICK TO PRESENT):</span>
+        <span class="story-sub">One-click presentation controls with animated walkthrough and auto-loaded scripts</span>
+      </div>
+      <div class="storyboard-grid">
+        <button class="story-btn" id="storyStep1" data-step="1">
+          <span class="step-num">STEP 1</span>
+          <span class="step-title">The Bottleneck: Why TLS Fails</span>
+          <span class="step-desc">Watch 32ms TLS handshake breach 5.0ms watchdog &amp; halt robot</span>
+        </button>
+        <button class="story-btn active" id="storyStep2" data-step="2">
+          <span class="step-num">STEP 2</span>
+          <span class="step-title">The Fix: CIP-Shield Fast-Path</span>
+          <span class="step-desc">Watch eBPF stream packets at 0.84ms with smooth welding &amp; sparks</span>
+        </button>
+        <button class="story-btn" id="storyStep3" data-step="3">
+          <span class="step-num">STEP 3</span>
+          <span class="step-title">The Trust Gap: CISA AA26-097A</span>
+          <span class="step-desc">Watch stealth logic tampering trigger automated quarantine &amp; rollback</span>
+        </button>
+      </div>
+    </section>
 
     <!-- HERO BEFORE VS AFTER TOGGLE -->
     <section class="mode-selector-section">
@@ -44,9 +66,9 @@
         <button class="mode-card mode-card-before" id="btnModeBefore">
           <div class="card-radio-indicator"></div>
           <div class="card-content">
-            <div class="card-tag tag-flaw">⚠️ BEFORE: THE PROBLEM</div>
-            <h2 class="card-title">Standard IT Security (TLS Retrofit)</h2>
-            <p class="card-desc">Heavy cryptographic software handshake adds <strong>32.2ms jitter</strong> &rarr; breaches <strong>5.0ms Watchdog</strong> &rarr; Robot E-stops &rarr; <strong>$4,333/min</strong> downtime loss.</p>
+            <div class="card-tag tag-flaw">⚠️ BEFORE: THE INDUSTRIAL FLAW</div>
+            <h2 class="card-title">Standard IT Security (TLS 1.3 Retrofit)</h2>
+            <p class="card-desc">Software crypto handshake adds <strong>32.2ms jitter</strong> &rarr; breaches <strong>5.0ms Watchdog</strong> &rarr; Motion E-stop &rarr; <strong>$4,333/min</strong> downtime loss.</p>
           </div>
           <div class="card-stat-pill stat-bad">
             <span class="stat-value">32.2 ms</span>
@@ -58,9 +80,9 @@
         <button class="mode-card mode-card-after active" id="btnModeAfter">
           <div class="card-radio-indicator"></div>
           <div class="card-content">
-            <div class="card-tag tag-solution">🛡️ AFTER: MY PROPOSED SOLUTION</div>
-            <h2 class="card-title">CIP-Shield Fast-Path (eBPF Offload)</h2>
-            <p class="card-desc">Layer-2 cut-through authentication on NIC &rarr; <strong>0.84ms latency</strong> &rarr; 13.82&micro;s Poly1305 MAC &rarr; Smooth continuous motion &rarr; <strong>$2.6M saved/year</strong>.</p>
+            <div class="card-tag tag-solution">🛡️ AFTER: MY PROPOSED ARCHITECTURE</div>
+            <h2 class="card-title">CIP-Shield Fast-Path (eBPF / MACsec Offload)</h2>
+            <p class="card-desc">Layer-2 cut-through authentication &rarr; <strong>0.84ms latency</strong> &rarr; 13.82&micro;s Poly1305 check &rarr; Smooth motion &rarr; <strong>$2.6M saved/year</strong>.</p>
           </div>
           <div class="card-stat-pill stat-good">
             <span class="stat-value">0.84 ms</span>
@@ -71,16 +93,18 @@
       </div>
     </section>
 
-    <!-- WORKSPACE 2-COLUMN GRID -->
+    <!-- WORKSPACE 2-COLUMN SHOWCASE -->
     <div class="showcase-grid">
 
-      <!-- LEFT COLUMN: CONTROLLOGIX & 3D ROBOT TWIN -->
+      <!-- LEFT COLUMN: CONTROLLOGIX & 3D ARTICULATED ROBOT TWIN -->
       <section class="visual-panel">
         
         <!-- CONTROLLOGIX 5580 CHASSIS BANNER -->
         <div class="plc-chassis-bar">
           <div class="chassis-header">
-            <div class="chassis-model">Allen-Bradley 1756 ControlLogix 5580</div>
+            <div class="chassis-model">
+              <span class="brand-sub">ALLEN-BRADLEY</span> ControlLogix 5580 System (1756 Chassis)
+            </div>
             <div class="chassis-dot-matrix">
               <span class="dot-matrix-led" id="dotMatrixDisplay">RUN</span>
             </div>
@@ -89,7 +113,7 @@
           <div class="chassis-modules">
             <!-- Slot 0: 1756-L85E CPU -->
             <div class="plc-slot slot-cpu">
-              <div class="slot-label">SLOT 0: 1756-L85E</div>
+              <div class="slot-label">SLOT 0: 1756-L85E CPU</div>
               <div class="slot-leds">
                 <span class="led-indicator led-run active" id="ledRun">RUN</span>
                 <span class="led-indicator led-ok active" id="ledOk">OK</span>
@@ -111,16 +135,16 @@
 
             <!-- Cycle Specs -->
             <div class="chassis-specs">
-              <div>RPI: <strong>1.0 ms</strong></div>
+              <div>RPI Target: <strong>1.0 ms</strong></div>
               <div>Watchdog: <strong>5.0 ms</strong></div>
-              <div>Load: <strong id="cpuLoadText">24% CPU</strong></div>
+              <div>Scan Engine: <strong id="cpuLoadText">24% CPU (0.22ms)</strong></div>
             </div>
           </div>
         </div>
 
-        <!-- CANVAS WORKCELL VIEWPORT -->
+        <!-- CANVAS WORKCELL VIEWPORT WITH REAL-TIME ANIMATIONS -->
         <div class="canvas-viewport-wrap">
-          <canvas id="twinCanvas" width="900" height="520"></canvas>
+          <canvas id="twinCanvas" width="920" height="520"></canvas>
           
           <!-- DYNAMIC STATUS OVERLAY BANNER -->
           <div class="viewport-overlay" id="viewportOverlay">
@@ -130,9 +154,11 @@
             </div>
           </div>
 
-          <!-- WORKCELL CONTROLS -->
+          <!-- INTERACTIVE QUICK BAR -->
           <div class="viewport-quick-bar">
-            <span class="quick-title">Workcell: 6-Axis Welding Robot (FANUC / Rockwell Kinetix 5700 Servos)</span>
+            <div class="quick-title">
+              <span class="live-dot"></span> <strong>Interactive Workcell:</strong> 6-Axis Welding Robot (FANUC / Kinetix 5700 Multi-Axis Servos)
+            </div>
             <div class="quick-actions">
               <button class="btn-micro" id="btnToggleTamper">
                 <span id="tamperIcon">&#128275;</span> <span id="tamperText">Inject Logic Tampering (CISA)</span>
@@ -150,7 +176,7 @@
       <section class="metrics-panel">
         
         <!-- PROOF TILE 1: LATENCY TIMELINE GAUGE -->
-        <div class="proof-card">
+        <div class="proof-card" id="cardLatency">
           <div class="proof-card-header">
             <h3>1. Cyclic Latency &amp; Watchdog Budget</h3>
             <span class="chip-badge" id="latencyChipBadge">WITHIN 1.0ms RPI</span>
@@ -183,7 +209,7 @@
             </div>
           </div>
 
-          <!-- BENCHMARK COMPARISON -->
+          <!-- BENCHMARK SPECS -->
           <div class="crypto-spec-row">
             <div class="spec-col">
               <span class="spec-k">Per-Frame Crypto:</span>
@@ -195,23 +221,23 @@
             </div>
             <div class="spec-col">
               <span class="spec-k">Watchdog Trips:</span>
-              <strong class="spec-v" id="tripsCountText">0 Faults</strong>
+              <strong class="spec-v" id="tripsCountText">0 Faults (Nominal)</strong>
             </div>
           </div>
         </div>
 
         <!-- PROOF TILE 2: FINANCIAL LOSS ACCUMULATOR -->
-        <div class="proof-card">
+        <div class="proof-card" id="cardFinance">
           <div class="proof-card-header">
-            <h3>2. Factory Downtime &amp; Business Impact</h3>
+            <h3>2. Factory Downtime &amp; Business ROI</h3>
             <span class="chip-badge badge-green" id="financeChipBadge">$2.60M SAVED / YR</span>
           </div>
 
           <div class="finance-display-grid">
             <div class="finance-metric-box">
-              <span class="fin-label">Unplanned Downtime Cost Rate</span>
+              <span class="fin-label">Unplanned Downtime Rate</span>
               <span class="fin-value-red">$4,333 <small>/ minute</small></span>
-              <span class="fin-sub">($260,000 / hour automotive body shop)</span>
+              <span class="fin-sub">($260,000 / hour automotive assembly)</span>
             </div>
             <div class="finance-metric-box">
               <span class="fin-label">Session Downtime Incurred</span>
@@ -222,7 +248,7 @@
         </div>
 
         <!-- PROOF TILE 3: CISA AA26-097A LOGIC ATTESTATION -->
-        <div class="proof-card">
+        <div class="proof-card" id="cardCisa">
           <div class="proof-card-header">
             <h3>3. Software Trust Gap (CISA AA26-097A)</h3>
             <span class="chip-badge" id="cisaStatusBadge">HASH ATTESTED (MATCH)</span>
@@ -234,12 +260,12 @@
               <code class="hash-code" id="hashAcd">SHA-256: 0x9E7F42C1B80A...</code>
             </div>
             <div class="hash-box">
-              <span class="hash-label">ControlLogix Flash Runtime Logic:</span>
+              <span class="hash-label">ControlLogix Flash Runtime Memory:</span>
               <code class="hash-code" id="hashPlc">SHA-256: 0x9E7F42C1B80A...</code>
             </div>
           </div>
 
-          <!-- 6-STAGE COMPACT PIPELINE STATUS -->
+          <!-- 6-STAGE PIPELINE TRACK -->
           <div class="pipeline-track" id="pipelineTrack">
             <div class="pipe-node active" title="Stage 01: Canonical L5X Hashing">01 SIGN</div>
             <div class="pipe-node active" title="Stage 02: Hardened Jump Host Download Gate">02 GATE</div>
@@ -263,7 +289,7 @@
         <div class="hud-header">
           <div class="hud-title-badge">
             <span class="hud-icon">&#128483;</span>
-            <span>WHAT TO SAY TO THE INTERVIEWER RIGHT NOW (YOUR SCRIPT)</span>
+            <span>WHAT TO SAY TO THE INTERVIEWER RIGHT NOW (YOUR EXACT SCRIPT)</span>
           </div>
           <div class="hud-role-tag">Rockwell GET (IT) Interview Talking Point</div>
         </div>
@@ -296,7 +322,7 @@
       </div>
       <div class="modal-body">
         <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAASgAAAEoAQAAAADDfFG0AAAB80lEQVR4nO1ay2oEMQyTyvz/L6sHKY/ZXvYUG5osCzsTQYVwbDkuhS/Wzzegi7qoP+sB6F8CKEJ5FrV2urIv0QsCAEY4Wiq/HTtd2dfoBW7RBQoiopp32rIvRgnMgZQSXC14tUX5RIqgY6wLrz6oB5iRRIggQIGgtp2u7Gv0GpEk53o632MVyLbsS/SaeWoIZdGgtdOV/XkUBTpVvSpkfEXet2VfgyIkxUkAIDiFinKd2Z9FOd9TsJHwF44xQhSpvuxLzqPr4jyH8anKFm4/9IGiQImph9PdE9Ped2ZfgXKmEgAynWRiTc75rdmfRjlfEbQ+xDATfoWbv94oglguLL4rJTKB1ph9AWrLV0TiSslk0vUTHyjlNkKIOlMrRsbO7A+j0iqmKK6TOZpHO42u7MvyVxJ8br4AgM70VrIx+xKUyHGDw5H+o9utj6/1ANg6bD8Qgqh1r9OVfRmKTAqz49LWEN3+8Q9KkIZ3GJ9ZCm7+ei1pa4ckyf5Cy79C6sq+yk/4J+Z917AXjq6bv9ba5tvasr7fzZlHV/Y19TGWNepwKhjhbn3c1jbfXgcy94bD4PdlX46KiYi70DiZ5bzaoJ7Xk9ww+sY1F/g1vFqjpPnPOJl3pCnyvLs5+6Oobb49Rh8Zf6yhZF/2pf7r0F+8qP+E+gVCJ/NHDV8koQAAAABJRU5ErkJggg==" alt="Scan QR Code" class="qr-img">
-        <p class="qr-instructions">Scan with your smartphone camera to run and interact with this live digital twin during your interview.</p>
+        <p class="qr-instructions">Scan with your smartphone camera to mirror and control this live digital twin during your interview.</p>
         <div class="qr-link-box">https://divyansh9704.github.io/rockwell-cip-shield-simulation/</div>
       </div>
     </div>

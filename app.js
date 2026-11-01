@@ -1,6 +1,7 @@
 /* ==========================================================================
    ROCKWELL AUTOMATION CIP-SHIELD: HIGH-IMPACT BEFORE VS AFTER DIGITAL TWIN
-   Engineered for effortless 60-second explanation during technical interviews.
+   Includes Network Data Pipe Animation, 6-Axis Hydraulic Robot Kinematics,
+   Plasma Arc & Bouncing Sparks, Mechanical E-Stop Stutter, and 3-Step Storyboard.
    ========================================================================== */
 
 (function () {
@@ -9,25 +10,29 @@
   // APPLICATION STATE
   const state = {
     mode: 'after',            // 'before' (naive TLS) or 'after' (CIP-Shield fast-path)
+    currentStep: 2,           // 1: Bottleneck, 2: Fix, 3: Trust Gap
     tampered: false,          // CISA AA26-097A logic tampering state
     audioEnabled: false,
-    autoDemoRunning: false,
-    autoDemoTimer: null,
     
     // Physical kinematic & motion parameters
     robotAngle1: 0,
     robotAngle2: 0,
     robotWeldPhase: 0,
     robotFaultFreeze: false,
+    brakeJerkOffset: 0,
     
     // Performance & financial metrics
     currentLatency: 0.84,     // ms
     targetLatency: 0.84,
-    jitterStdDev: 0.04,
     downtimeLossIncurred: 0,  // USD accumulated during watchdog faults
     
-    // Particle spark system
+    // Network packet conduit animation
+    packetBusProgress: 0,
+    packets: [],
+    
+    // Particle spark & smoke systems
     sparks: [],
+    smoke: [],
     
     // Led dot matrix rolling message
     dotMatrixStrings: ['RUN ', 'OK  ', 'L85E', '1.0m', 'SYNC'],
@@ -36,11 +41,14 @@
   };
 
   // DOM REFERENCES
+  const storyStep1 = document.getElementById('storyStep1');
+  const storyStep2 = document.getElementById('storyStep2');
+  const storyStep3 = document.getElementById('storyStep3');
+
   const btnModeBefore = document.getElementById('btnModeBefore');
   const btnModeAfter = document.getElementById('btnModeAfter');
   const btnToggleTamper = document.getElementById('btnToggleTamper');
   const btnTriggerSpike = document.getElementById('btnTriggerSpike');
-  const autoDemoBtn = document.getElementById('autoDemoBtn');
   const audioToggleBtn = document.getElementById('audioToggleBtn');
   const audioIcon = document.getElementById('audioIcon');
   const qrBtn = document.getElementById('qrBtn');
@@ -59,6 +67,10 @@
   const overlayText = document.getElementById('overlayText');
 
   // METRICS DOM
+  const cardLatency = document.getElementById('cardLatency');
+  const cardFinance = document.getElementById('cardFinance');
+  const cardCisa = document.getElementById('cardCisa');
+
   const latencyChipBadge = document.getElementById('latencyChipBadge');
   const currentLatencyVal = document.getElementById('currentLatencyVal');
   const latencySubtext = document.getElementById('latencySubtext');
@@ -98,7 +110,7 @@
       const AudioContext = window.AudioContext || window.webkitAudioContext;
       audioCtx = new AudioContext();
 
-      // 60Hz transformer background hum
+      // 60Hz transformer hum
       humOsc = audioCtx.createOscillator();
       humOsc.type = 'sine';
       humOsc.frequency.setValueAtTime(60, audioCtx.currentTime);
@@ -108,7 +120,7 @@
       humGain.connect(audioCtx.destination);
       humOsc.start();
 
-      // Robotic servo motor whine
+      // Servo whine
       servoOsc = audioCtx.createOscillator();
       servoOsc.type = 'sawtooth';
       servoOsc.frequency.setValueAtTime(320, audioCtx.currentTime);
@@ -137,9 +149,25 @@
     osc.stop(audioCtx.currentTime + 0.36);
   }
 
-  // MODE SWITCHING LOGIC (THE HEART OF THE DEMO)
-  function setMode(mode) {
+  // SPOTLIGHT CARD HELPER
+  function spotlightCard(cardElement) {
+    [cardLatency, cardFinance, cardCisa].forEach(c => c.classList.remove('spotlight'));
+    if (cardElement) {
+      cardElement.classList.add('spotlight');
+    }
+  }
+
+  // MODE SWITCHING LOGIC
+  function setMode(mode, stepNum = null) {
     state.mode = mode;
+
+    if (stepNum) {
+      state.currentStep = stepNum;
+      [storyStep1, storyStep2, storyStep3].forEach(b => b.classList.remove('active'));
+      if (stepNum === 1) storyStep1.classList.add('active');
+      if (stepNum === 2) storyStep2.classList.add('active');
+      if (stepNum === 3) storyStep3.classList.add('active');
+    }
 
     if (mode === 'before') {
       // ⚠️ BEFORE: THE FLAW (STANDARD TLS RETROFIT)
@@ -150,9 +178,12 @@
 
       state.targetLatency = 32.2;
       state.robotFaultFreeze = true;
+      state.brakeJerkOffset = (Math.random() - 0.5) * 8; // Mechanical brake stutter
       playWatchdogTripAlarm();
 
-      // Update PLC Hardware indicators to FAULT
+      spotlightCard(cardLatency);
+
+      // Hardware UI -> FAULT
       dotMatrixDisplay.textContent = 'FLT ';
       dotMatrixDisplay.style.color = '#EF4444';
       ledRun.classList.remove('active');
@@ -161,12 +192,12 @@
       keySwitchState.textContent = 'TRIPPED';
       cpuLoadText.innerHTML = '<span style="color:#EF4444;">88% SATURATED</span>';
 
-      // Update Viewport Overlay
+      // Viewport Overlay
       overlayBadge.className = 'overlay-badge badge-bad';
       overlayIcon.innerHTML = '&#9888;';
       overlayText.textContent = 'WATCHDOG FAULT: 32.2ms JITTER EXCEEDS 5.0ms LIMIT - ROBOT HALTED';
 
-      // Update Metric Tile 1: Latency
+      // Metric Tile 1: Latency
       currentLatencyVal.className = 'big-metric-num bad';
       currentLatencyVal.innerHTML = '32.2 <span class="unit">ms</span>';
       latencyChipBadge.className = 'chip-badge badge-red';
@@ -178,13 +209,13 @@
       jitterText.innerHTML = '<span style="color:#EF4444;">&plusmn;32.0 ms SPIKES</span>';
       tripsCountText.innerHTML = '<span style="color:#EF4444;">TRIPPED (SIL-3 Stop)</span>';
 
-      // Update Metric Tile 2: Finance
+      // Metric Tile 2: Finance
       financeChipBadge.className = 'chip-badge badge-red';
       financeChipBadge.textContent = 'LINE STOPPAGE INCURRED';
       sessionLossSub.textContent = 'Accumulating $4,333/min during mechanical emergency stop';
 
-      // Candidate Verbal Script HUD for BEFORE
-      hudScriptText.innerHTML = `"Sir/Ma'am, look at what happens in the <strong>BEFORE</strong> state: when factory engineers try the naive fix of enabling standard TLS encryption, the cryptographic handshake takes <strong>30 to 45 milliseconds</strong> of controller CPU. Because our ControlLogix motion loop has a strict <strong>5.0 millisecond watchdog limit</strong>, the controller aborts with a Motion Sync Loss. The robot freezes mid-weld, risking catastrophic workpiece damage and accumulating <strong>$4,333 every single minute</strong> in unplanned downtime."`;
+      // Candidate Verbal Script HUD for BEFORE (Step 1)
+      hudScriptText.innerHTML = `"Sir/Ma'am, look at the screen in <strong>Step 1 (The Bottleneck)</strong>: when factory networks apply standard IT encryption like TLS to CIP Motion, the software handshake takes <strong>30 to 45 milliseconds</strong> of controller CPU. Look at the animated network conduit above: the bulky TLS handshake clogs the gateway, starving downstream packets. Because our ControlLogix motion loop has a strict <strong>5.0 millisecond watchdog limit</strong>, the controller aborts with a Motion Sync Loss. The robot freezes mid-weld, gouging the car body and burning <strong>$4,333 every single minute</strong> in unplanned downtime."`;
 
     } else {
       // 🛡️ AFTER: THE PROPOSED SOLUTION (CIP-SHIELD FAST-PATH)
@@ -195,8 +226,11 @@
 
       state.targetLatency = 0.84;
       state.robotFaultFreeze = false;
+      state.brakeJerkOffset = 0;
 
-      // Update PLC Hardware indicators to RUN
+      spotlightCard(cardFinance);
+
+      // Hardware UI -> RUN
       dotMatrixDisplay.textContent = 'RUN ';
       dotMatrixDisplay.style.color = '#10B981';
       ledRun.classList.add('active');
@@ -205,12 +239,12 @@
       keySwitchState.textContent = 'RUN';
       cpuLoadText.innerHTML = '<strong>24% CPU (0.22ms)</strong>';
 
-      // Update Viewport Overlay
+      // Viewport Overlay
       overlayBadge.className = 'overlay-badge badge-good';
       overlayIcon.innerHTML = '&#10003;';
       overlayText.textContent = 'CIP-SHIELD ACTIVE &bull; 0.84ms DETERMINISTIC MOTION NOMINAL';
 
-      // Update Metric Tile 1: Latency
+      // Metric Tile 1: Latency
       currentLatencyVal.className = 'big-metric-num';
       currentLatencyVal.innerHTML = '0.84 <span class="unit">ms</span>';
       latencyChipBadge.className = 'chip-badge';
@@ -222,17 +256,17 @@
       jitterText.innerHTML = '&plusmn;0.04 ms';
       tripsCountText.innerHTML = '<span style="color:#10B981;">0 Faults (Nominal)</span>';
 
-      // Update Metric Tile 2: Finance
+      // Metric Tile 2: Finance
       financeChipBadge.className = 'chip-badge';
       financeChipBadge.textContent = '$2.60M SAVED / YR';
       sessionLossSub.textContent = 'Zero line stoppage under CIP-Shield fast-path';
 
-      // Candidate Verbal Script HUD for AFTER
-      hudScriptText.innerHTML = `"Now, look at the <strong>AFTER</strong> state when my proposed solution—<strong>CIP-Shield</strong>—is active. By offloading authentication directly to Layer 2 via eBPF/XDP on the network card, each CIP frame is verified in just <strong>13.82 microseconds</strong> using Poly1305. Total cyclic latency drops to <strong>0.84 milliseconds</strong>, well within the 1.0 ms RPI budget. Motion determinism is guaranteed, zero watchdog trips occur, and plant floors achieve <strong>$2.6 Million in annual downtime avoidance</strong>."`;
+      // Candidate Verbal Script HUD for AFTER (Step 2)
+      hudScriptText.innerHTML = `"Now, look at <strong>Step 2 (The Solution)</strong> when my proposed architecture—<strong>CIP-Shield</strong>—is applied. Notice how the network packets stream at wire speed through the Layer-2 eBPF gateway. Each frame is verified in just <strong>13.82 microseconds</strong> using Poly1305. Total cyclic latency drops to <strong>0.84 milliseconds</strong>, well within the 1.0 ms RPI budget. The robot welds smoothly with realistic spark dispersion, zero watchdog trips occur, and plant floors achieve <strong>$2.6 Million in annual downtime savings</strong>."`;
     }
   }
 
-  // CISA AA26-097A LOGIC TAMPERING TOGGLE
+  // CISA AA26-097A LOGIC TAMPERING TOGGLE (STEP 3)
   function toggleTampering() {
     state.tampered = !state.tampered;
 
@@ -240,9 +274,15 @@
 
     if (state.tampered) {
       // Logic Tampering Injected!
+      state.currentStep = 3;
+      [storyStep1, storyStep2, storyStep3].forEach(b => b.classList.remove('active'));
+      storyStep3.classList.add('active');
+
       btnToggleTamper.classList.add('active');
       tamperIcon.innerHTML = '&#9888;';
       tamperText.textContent = 'Revert Tamper Injection';
+
+      spotlightCard(cardCisa);
 
       cisaStatusBadge.className = 'chip-badge badge-red';
       cisaStatusBadge.textContent = 'DRIFT DETECTED (QUARANTINED)';
@@ -263,7 +303,7 @@
 
       pipelineStatusText.innerHTML = '<strong style="color:#EF4444;">[CISA ALERT] Stage 05 L5X Diff Gate failed!</strong> Unauthorized Add-On Instruction (safety interlock bypass) detected in controller flash. Download halted and automatic rollback executed.';
 
-      hudScriptText.innerHTML = `"Here is how we address <strong>CISA Advisory AA26-097A</strong>: today, an attacker can upload modified ladder logic directly to controller flash while the offline .ACD file appears pristine. With our 6-stage verification pipeline, any unapproved logic change causes an immediate SHA-256 hash mismatch at Stage 05, triggering an automated quarantine before the rogue logic can execute."`;
+      hudScriptText.innerHTML = `"Finally, in <strong>Step 3 (The Trust Gap)</strong>, we address <strong>CISA Advisory AA26-097A</strong>. Today, an attacker can upload modified bytecode directly to controller flash while the offline Studio 5000 .ACD file appears pristine. With our 6-stage signed manifest pipeline, notice how the unapproved logic is caught at <strong>Stage 05 (L5X Diff)</strong>: an automated quarantine blocks execution, protecting the physical line without requiring human intervention."`;
 
     } else {
       // Restored to Signed Baseline
@@ -283,90 +323,109 @@
 
       pipelineStatusText.textContent = 'All 6 stages verified: Controller flash matches signed baseline. No stealth logic modifications detected.';
 
-      // Restore mode HUD
-      setMode(state.mode);
+      setMode(state.mode, state.mode === 'after' ? 2 : 1);
     }
   }
 
-  // AUTOMATED 45-SECOND INTERVIEW TOUR
-  function runAutoDemo() {
-    if (state.autoDemoRunning) {
-      clearInterval(state.autoDemoTimer);
-      state.autoDemoRunning = false;
-      autoDemoBtn.classList.remove('active');
-      autoDemoBtn.innerHTML = '<span class="btn-icon">&#9658;</span> Play 45s Demo';
-      setMode('after');
-      return;
-    }
+  // 3-STEP STORYBOARD HANDLERS
+  storyStep1.addEventListener('click', () => {
+    if (state.tampered) toggleTampering();
+    setMode('before', 1);
+  });
 
-    state.autoDemoRunning = true;
-    autoDemoBtn.classList.add('active');
-    autoDemoBtn.innerHTML = '&#9724; Stop Demo';
+  storyStep2.addEventListener('click', () => {
+    if (state.tampered) toggleTampering();
+    setMode('after', 2);
+  });
 
-    // Step 1: Start in BEFORE mode (Show the problem)
-    setMode('before');
-
-    // Step 2: At 15s, switch to AFTER mode (Show the fix)
-    setTimeout(() => {
-      if (!state.autoDemoRunning) return;
-      setMode('after');
-    }, 15000);
-
-    // Step 3: At 30s, demonstrate CISA Logic Attestation
-    setTimeout(() => {
-      if (!state.autoDemoRunning) return;
+  storyStep3.addEventListener('click', () => {
+    if (!state.tampered) {
       toggleTampering();
-    }, 30000);
+    } else {
+      spotlightCard(cardCisa);
+    }
+  });
 
-    // Step 4: At 45s, restore nominal and complete
-    setTimeout(() => {
-      if (!state.autoDemoRunning) return;
-      if (state.tampered) toggleTampering();
-      state.autoDemoRunning = false;
-      autoDemoBtn.classList.remove('active');
-      autoDemoBtn.innerHTML = '<span class="btn-icon">&#9658;</span> Play 45s Demo';
-      setMode('after');
-    }, 45000);
-  }
-
-  // SPARK PARTICLE ENGINE
+  // PARTICLES: SPARKS & SMOKE
   function createSparks(x, y, count) {
     for (let i = 0; i < count; i++) {
-      const angle = (Math.PI * 0.75) + (Math.random() * Math.PI * 0.5);
-      const speed = 2 + Math.random() * 5;
+      const angle = (Math.PI * 0.72) + (Math.random() * Math.PI * 0.55);
+      const speed = 2.5 + Math.random() * 6;
       state.sparks.push({
         x: x,
         y: y,
         vx: Math.cos(angle) * speed,
-        vy: Math.sin(angle) * speed - (1 + Math.random() * 3),
+        vy: Math.sin(angle) * speed - (1 + Math.random() * 3.5),
         life: 1.0,
         decay: 0.02 + Math.random() * 0.03,
-        size: 1 + Math.random() * 2
+        size: 1.2 + Math.random() * 2.2
       });
     }
   }
 
-  function updateAndDrawSparks() {
+  function createSmoke(x, y) {
+    state.smoke.push({
+      x: x + (Math.random() - 0.5) * 10,
+      y: y,
+      vx: (Math.random() - 0.5) * 0.6,
+      vy: -(0.5 + Math.random() * 0.8),
+      size: 4 + Math.random() * 4,
+      life: 1.0,
+      decay: 0.015
+    });
+  }
+
+  function updateAndDrawParticles() {
+    // 1. Draw and update sparks
     for (let i = state.sparks.length - 1; i >= 0; i--) {
       const p = state.sparks[i];
       p.x += p.vx;
       p.y += p.vy;
-      p.vy += 0.15; // Gravity
+      p.vy += 0.16; // Gravity
       p.life -= p.decay;
+
+      // Bounce off floor or workpiece plate (y > 420)
+      if (p.y > 420 && p.vy > 0) {
+        p.vy = -p.vy * 0.45;
+        p.vx *= 0.7;
+      }
 
       if (p.life <= 0) {
         state.sparks.splice(i, 1);
         continue;
       }
 
-      ctx.fillStyle = `rgba(255, ${Math.floor(180 * p.life + 75)}, 50, ${p.life})`;
+      // Hot metal color gradient
+      const r = 255;
+      const g = Math.floor(200 * p.life + 55);
+      const b = Math.floor(50 * p.life);
+      ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${p.life})`;
       ctx.beginPath();
       ctx.arc(p.x, p.y, p.size * p.life, 0, Math.PI * 2);
       ctx.fill();
     }
+
+    // 2. Draw and update smoke
+    for (let i = state.smoke.length - 1; i >= 0; i--) {
+      const s = state.smoke[i];
+      s.x += s.vx;
+      s.y += s.vy;
+      s.size += 0.15;
+      s.life -= s.decay;
+
+      if (s.life <= 0) {
+        state.smoke.splice(i, 1);
+        continue;
+      }
+
+      ctx.fillStyle = `rgba(148, 163, 184, ${s.life * 0.25})`;
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2);
+      ctx.fill();
+    }
   }
 
-  // CANVAS RENDERER: 6-AXIS ARTICULATED ROBOT & WORKCELL
+  // CANVAS RENDERER: NETWORK DATA PIPE + 6-AXIS HYDRAULIC ROBOT
   function renderCanvas() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -374,174 +433,292 @@
     const h = canvas.height;
 
     // 1. Dark Factory Floor Grid
-    ctx.strokeStyle = '#121B28';
+    ctx.strokeStyle = '#101726';
     ctx.lineWidth = 1;
-    for (let x = 0; x < w; x += 40) {
+    for (let x = 0; x < w; x += 36) {
       ctx.beginPath();
       ctx.moveTo(x, 0);
       ctx.lineTo(x, h);
       ctx.stroke();
     }
-    for (let y = 0; y < h; y += 40) {
+    for (let y = 0; y < h; y += 36) {
       ctx.beginPath();
       ctx.moveTo(0, y);
       ctx.lineTo(w, y);
       ctx.stroke();
     }
 
-    // 2. Workcell Safety Zone Border
-    ctx.strokeStyle = state.mode === 'before' ? 'rgba(239, 68, 68, 0.4)' : 'rgba(16, 185, 129, 0.4)';
+    // 2. INDUSTRIAL NETWORK DATA CONDUIT (TOP OF CANVAS)
+    const pipeY = 32;
+    const pipeStartX = 40;
+    const pipeEndX = w - 40;
+
+    // Background Conduit Track
+    ctx.fillStyle = '#090E17';
+    ctx.strokeStyle = '#1E2D44';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.roundRect(pipeStartX, pipeY - 14, pipeEndX - pipeStartX, 28, 4);
+    ctx.fill();
+    ctx.stroke();
+
+    // Node Badges along Network Pipe
+    const nodes = [
+      { x: pipeStartX + 60, name: 'Studio 5000' },
+      { x: pipeStartX + 220, name: 'Cell Switch' },
+      { x: pipeStartX + 420, name: state.mode === 'after' ? 'eBPF Gateway' : 'TLS Gateway' },
+      { x: pipeStartX + 640, name: '1756-EN4TR' },
+      { x: pipeStartX + 800, name: 'Kinetix Servos' }
+    ];
+
+    nodes.forEach(n => {
+      ctx.fillStyle = '#141D2D';
+      ctx.strokeStyle = '#334460';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.roundRect(n.x - 45, pipeY - 10, 90, 20, 3);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = '#94A3B8';
+      ctx.font = 'bold 9px var(--font-mono)';
+      ctx.textAlign = 'center';
+      ctx.fillText(n.name, n.x, pipeY + 4);
+    });
+
+    // Animate Data Packets along the Pipe
+    state.packetBusProgress = (state.packetBusProgress + (state.mode === 'after' ? 0.012 : 0.002)) % 1.0;
+
+    if (state.mode === 'after') {
+      // CIP-Shield: Continuous stream of green/cyan micro-packets
+      for (let i = 0; i < 7; i++) {
+        const offset = (state.packetBusProgress + (i / 7)) % 1.0;
+        const px = pipeStartX + 70 + offset * (pipeEndX - pipeStartX - 140);
+        
+        ctx.fillStyle = '#10B981';
+        ctx.shadowColor = '#10B981';
+        ctx.shadowBlur = 8;
+        ctx.beginPath();
+        ctx.roundRect(px - 10, pipeY - 5, 20, 10, 2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+
+        ctx.fillStyle = '#064E3B';
+        ctx.font = 'bold 7px var(--font-mono)';
+        ctx.fillText('1.0m', px, pipeY + 3);
+      }
+
+      // Gateway verification pulse ring
+      const gwX = pipeStartX + 420;
+      ctx.strokeStyle = 'rgba(16, 185, 129, 0.7)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(gwX, pipeY, 18 + Math.sin(Date.now() * 0.01) * 3, 0, Math.PI * 2);
+      ctx.stroke();
+
+    } else {
+      // TLS Mode: Bloated, stalled packet in the middle causing blockage
+      const gwX = pipeStartX + 420;
+      ctx.fillStyle = '#EF4444';
+      ctx.shadowColor = '#EF4444';
+      ctx.shadowBlur = 12;
+      ctx.beginPath();
+      ctx.roundRect(gwX - 35, pipeY - 9, 70, 18, 3);
+      ctx.fill();
+      ctx.shadowBlur = 0;
+
+      ctx.fillStyle = '#FFFFFF';
+      ctx.font = 'bold 8px var(--font-mono)';
+      ctx.textAlign = 'center';
+      ctx.fillText('TLS 32.2ms', gwX, pipeY + 4);
+
+      // Warning text over conduit
+      ctx.fillStyle = '#EF4444';
+      ctx.font = 'bold 10px var(--font-mono)';
+      ctx.fillText('BUFFER STARVATION // PACKET TIMEOUT', gwX + 220, pipeY + 24);
+    }
+
+    // 3. Workcell Safety Zone Perimeter Line
+    ctx.strokeStyle = state.mode === 'before' ? 'rgba(239, 68, 68, 0.45)' : 'rgba(16, 185, 129, 0.35)';
     ctx.lineWidth = 2;
     ctx.setLineDash([8, 6]);
-    ctx.strokeRect(30, 30, w - 60, h - 60);
+    ctx.strokeRect(30, 75, w - 60, h - 95);
     ctx.setLineDash([]);
 
-    // 3. Robot Base Pedestal
-    const baseX = w * 0.38;
-    const baseY = h * 0.78;
+    // 4. Robot Base Pedestal
+    const baseX = w * 0.36;
+    const baseY = h * 0.82;
 
-    // Pedestal Plate
+    // Heavy Mounting Plates
+    ctx.fillStyle = '#141D2D';
+    ctx.fillRect(baseX - 75, baseY - 12, 150, 24);
     ctx.fillStyle = '#1E293B';
-    ctx.fillRect(baseX - 70, baseY - 12, 140, 24);
-    ctx.fillStyle = '#334155';
-    ctx.fillRect(baseX - 55, baseY - 32, 110, 20);
+    ctx.fillRect(baseX - 58, baseY - 32, 116, 20);
 
-    // Warning / Status Beacon on Base
+    // Pedestal Status Beacon
     const beaconColor = state.mode === 'before' ? '#EF4444' : '#10B981';
     ctx.fillStyle = beaconColor;
     ctx.beginPath();
-    ctx.arc(baseX + 50, baseY - 40, 6, 0, Math.PI * 2);
+    ctx.arc(baseX + 48, baseY - 42, 6, 0, Math.PI * 2);
     ctx.fill();
     ctx.shadowColor = beaconColor;
-    ctx.shadowBlur = 10;
+    ctx.shadowBlur = 12;
     ctx.stroke();
     ctx.shadowBlur = 0;
 
-    // Kinematics Update
+    // Kinematics Calculations
     if (!state.robotFaultFreeze) {
-      state.robotWeldPhase += 0.025;
-      state.robotAngle1 = Math.sin(state.robotWeldPhase) * 0.28 - 0.45;
-      state.robotAngle2 = Math.cos(state.robotWeldPhase) * 0.32 + 0.85;
+      state.robotWeldPhase += 0.024;
+      state.robotAngle1 = Math.sin(state.robotWeldPhase) * 0.28 - 0.46;
+      state.robotAngle2 = Math.cos(state.robotWeldPhase) * 0.32 + 0.86;
     }
 
-    // Joint 1: Shoulder Turret
-    const j1x = baseX;
-    const j1y = baseY - 45;
+    // Joint 1: Shoulder Turret Base
+    const j1x = baseX + state.brakeJerkOffset;
+    const j1y = baseY - 48;
 
-    ctx.fillStyle = '#475569';
+    ctx.fillStyle = '#334155';
     ctx.beginPath();
-    ctx.arc(j1x, j1y, 24, 0, Math.PI * 2);
+    ctx.arc(j1x, j1y, 25, 0, Math.PI * 2);
     ctx.fill();
     ctx.strokeStyle = '#64748B';
     ctx.lineWidth = 2;
     ctx.stroke();
 
     // Link 1: Upper Arm
-    const arm1Length = 140;
+    const arm1Length = 145;
     const j2x = j1x + Math.sin(state.robotAngle1) * arm1Length;
     const j2y = j1y - Math.cos(state.robotAngle1) * arm1Length;
 
-    // Draw Arm 1
+    // Draw Upper Arm Beam
     ctx.strokeStyle = state.mode === 'before' ? '#991B1B' : '#0284C7';
-    ctx.lineWidth = 20;
+    ctx.lineWidth = 22;
     ctx.lineCap = 'round';
     ctx.beginPath();
     ctx.moveTo(j1x, j1y);
     ctx.lineTo(j2x, j2y);
     ctx.stroke();
 
-    // Hydraulic piston detail on arm 1
-    ctx.strokeStyle = '#94A3B8';
-    ctx.lineWidth = 5;
+    // Animated Hydraulic Piston 1 (Telescoping Cylinder)
+    const p1BaseX = j1x - 12;
+    const p1BaseY = j1y - 8;
+    const p1RodX = j2x - 10;
+    const p1RodY = j2y + 12;
+
+    ctx.strokeStyle = '#475569';
+    ctx.lineWidth = 8;
     ctx.beginPath();
-    ctx.moveTo(j1x - 8, j1y - 10);
-    ctx.lineTo(j2x - 8, j2y + 10);
+    ctx.moveTo(p1BaseX, p1BaseY);
+    ctx.lineTo(p1BaseX + (p1RodX - p1BaseX) * 0.55, p1BaseY + (p1RodY - p1BaseY) * 0.55);
+    ctx.stroke();
+
+    ctx.strokeStyle = '#94A3B8';
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(p1BaseX + (p1RodX - p1BaseX) * 0.45, p1BaseY + (p1RodY - p1BaseY) * 0.45);
+    ctx.lineTo(p1RodX, p1RodY);
     ctx.stroke();
 
     // Joint 2: Elbow
-    ctx.fillStyle = '#334155';
+    ctx.fillStyle = '#1E293B';
     ctx.beginPath();
-    ctx.arc(j2x, j2y, 18, 0, Math.PI * 2);
+    ctx.arc(j2x, j2y, 19, 0, Math.PI * 2);
     ctx.fill();
     ctx.strokeStyle = '#64748B';
     ctx.lineWidth = 2;
     ctx.stroke();
 
     // Link 2: Forearm
-    const arm2Length = 130;
+    const arm2Length = 135;
     const j3x = j2x + Math.sin(state.robotAngle1 + state.robotAngle2) * arm2Length;
     const j3y = j2y - Math.cos(state.robotAngle1 + state.robotAngle2) * arm2Length;
 
-    // Draw Arm 2
+    // Draw Forearm Beam
     ctx.strokeStyle = state.mode === 'before' ? '#B91C1C' : '#0369A1';
-    ctx.lineWidth = 14;
+    ctx.lineWidth = 15;
     ctx.beginPath();
     ctx.moveTo(j2x, j2y);
     ctx.lineTo(j3x, j3y);
     ctx.stroke();
 
-    // Wrist & Tool Head (Laser Welder)
-    const toolX = j3x + 18;
-    const toolY = j3y + 24;
+    // Wrist & Welding Tool Assembly
+    const toolX = j3x + 20;
+    const toolY = j3y + 26;
 
     ctx.fillStyle = '#F59E0B';
     ctx.beginPath();
-    ctx.arc(j3x, j3y, 10, 0, Math.PI * 2);
+    ctx.arc(j3x, j3y, 11, 0, Math.PI * 2);
     ctx.fill();
 
-    // Welding Nozzle Tip
+    // Welding Optic Nozzle
     ctx.strokeStyle = '#E2E8F0';
-    ctx.lineWidth = 4;
+    ctx.lineWidth = 5;
     ctx.beginPath();
     ctx.moveTo(j3x, j3y);
     ctx.lineTo(toolX, toolY);
     ctx.stroke();
 
-    // 4. Automotive Workpiece (Car Body Panel)
-    const workX = w * 0.65;
-    const workY = h * 0.72;
+    // 5. Automotive Body Panel Workpiece
+    const workX = w * 0.68;
+    const workY = h * 0.74;
 
     ctx.fillStyle = '#1E293B';
     ctx.strokeStyle = '#475569';
     ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.moveTo(workX - 60, workY + 30);
-    ctx.lineTo(workX + 90, workY - 20);
-    ctx.lineTo(workX + 110, workY + 40);
-    ctx.lineTo(workX - 40, workY + 80);
+    ctx.moveTo(workX - 70, workY + 30);
+    ctx.lineTo(workX + 90, workY - 24);
+    ctx.lineTo(workX + 115, workY + 45);
+    ctx.lineTo(workX - 45, workY + 85);
     ctx.closePath();
     ctx.fill();
     ctx.stroke();
 
-    // 5. Welding Arc & Spark Generation
+    // Weld seam bead line
+    ctx.strokeStyle = state.mode === 'after' ? '#38BDF8' : '#78350F';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(workX - 20, workY + 20);
+    ctx.lineTo(workX + 60, workY + 5);
+    ctx.stroke();
+
+    // 6. Plasma Arc Flash & Bouncing Particle Sparks
     if (!state.robotFaultFreeze) {
-      // Weld Arc Flash
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+      // Dynamic Plasma Welding Torch Arc
+      const flashSize = 6 + Math.random() * 4;
+      ctx.fillStyle = '#FFFFFF';
       ctx.beginPath();
-      ctx.arc(toolX, toolY, 5 + Math.random() * 3, 0, Math.PI * 2);
+      ctx.arc(toolX, toolY, flashSize, 0, Math.PI * 2);
       ctx.fill();
 
-      // Outer Glow
-      ctx.fillStyle = 'rgba(56, 189, 248, 0.4)';
+      // Outer Cyan Plasma Halo
+      ctx.fillStyle = 'rgba(56, 189, 248, 0.45)';
       ctx.beginPath();
-      ctx.arc(toolX, toolY, 16 + Math.random() * 8, 0, Math.PI * 2);
+      ctx.arc(toolX, toolY, flashSize + 12 + Math.random() * 8, 0, Math.PI * 2);
       ctx.fill();
 
-      // Emit Bouncing Sparks
-      createSparks(toolX, toolY, 3);
+      // Emit high-energy bouncing sparks
+      createSparks(toolX, toolY, 4);
+
     } else {
-      // E-STOP WARNING HAZARD ON WORKPIECE
-      ctx.fillStyle = 'rgba(239, 68, 68, 0.85)';
-      ctx.font = 'bold 14px var(--font-mono)';
-      ctx.fillText('E-STOP: WELDING ABORTED', toolX - 60, toolY - 20);
+      // E-STOP STATE: Sparks cut off, smoke puffs rise
+      if (Math.random() < 0.25) {
+        createSmoke(toolX, toolY);
+      }
+
+      // Red Hazard Hologram over Workpiece
+      ctx.fillStyle = 'rgba(239, 68, 68, 0.9)';
+      ctx.font = 'bold 13px var(--font-mono)';
+      ctx.textAlign = 'center';
+      ctx.fillText('MECHANICAL BRAKE ENGAGED // SERVO TIMEOUT', toolX - 10, toolY - 26);
     }
 
-    // Render all active particles
-    updateAndDrawSparks();
+    // Render all active particle systems
+    updateAndDrawParticles();
 
-    // 6. Accumulate Downtime Financial Loss if in Fault
+    // 7. Accumulate Financial Loss during Watchdog Faults
     if (state.mode === 'before') {
-      // $4,333 / min = $72.21 per second = ~1.20 per frame at 60fps
+      // $4,333 / min = $72.21 per second = ~1.203 per frame at 60fps
       state.downtimeLossIncurred += 1.203;
       sessionLossVal.className = 'fin-value-dynamic bad';
       sessionLossVal.textContent = `$${state.downtimeLossIncurred.toFixed(2)}`;
@@ -551,20 +728,17 @@
   }
 
   // EVENT LISTENERS
-  btnModeBefore.addEventListener('click', () => setMode('before'));
-  btnModeAfter.addEventListener('click', () => setMode('after'));
+  btnModeBefore.addEventListener('click', () => setMode('before', 1));
+  btnModeAfter.addEventListener('click', () => setMode('after', 2));
   btnToggleTamper.addEventListener('click', toggleTampering);
 
   btnTriggerSpike.addEventListener('click', () => {
-    // Temporary 35ms packet jitter injection
     const prevMode = state.mode;
-    setMode('before');
+    setMode('before', 1);
     setTimeout(() => {
-      if (prevMode === 'after') setMode('after');
-    }, 4000);
+      if (prevMode === 'after') setMode('after', 2);
+    }, 4500);
   });
-
-  autoDemoBtn.addEventListener('click', runAutoDemo);
 
   audioToggleBtn.addEventListener('click', () => {
     state.audioEnabled = !state.audioEnabled;
@@ -599,8 +773,8 @@
     }
   }, 400);
 
-  // START RUNTIME
-  setMode('after');
+  // START RUNTIME IN STEP 2 (NOMINAL AFTER STATE)
+  setMode('after', 2);
   requestAnimationFrame(renderCanvas);
 
 })();
