@@ -134,6 +134,56 @@ body {
   color: #FFFFFF;
 }
 
+.btn-tour {
+  background: linear-gradient(135deg, #1E40AF 0%, #2563EB 100%);
+  border-color: #60A5FA;
+  color: #FFFFFF;
+  font-weight: 700;
+  box-shadow: 0 0 10px rgba(37, 99, 235, 0.3);
+}
+
+.btn-tour:hover {
+  background: linear-gradient(135deg, #2563EB 0%, #3B82F6 100%);
+  border-color: #93C5FD;
+}
+
+/* TOUR PROGRESS BAR */
+.tour-progress-bar-wrap {
+  display: none;
+  background-color: #0B111D;
+  border-bottom: 1px solid #1E2D44;
+  height: 24px;
+  position: relative;
+  overflow: hidden;
+  align-items: center;
+  padding: 0 16px;
+}
+
+.tour-progress-bar-wrap.active {
+  display: flex;
+}
+
+.tour-progress-fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 0%;
+  background: linear-gradient(90deg, #2563EB 0%, #10B981 100%);
+  opacity: 0.3;
+  transition: width 0.3s linear;
+}
+
+.tour-status-text {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  color: #38BDF8;
+  position: relative;
+  z-index: 2;
+  letter-spacing: 0.5px;
+}
+
 /* MAIN LAYOUT */
 .main-layout {
   flex: 1;

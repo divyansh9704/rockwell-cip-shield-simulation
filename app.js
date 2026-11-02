@@ -1,7 +1,12 @@
 /* ==========================================================================
    ROCKWELL AUTOMATION CIP-SHIELD: HIGH-IMPACT BEFORE VS AFTER DIGITAL TWIN
-   Includes Network Data Pipe Animation, 6-Axis Hydraulic Robot Kinematics,
-   Plasma Arc & Bouncing Sparks, Mechanical E-Stop Stutter, and 3-Step Storyboard.
+   Includes:
+   - High-DPI Retina Canvas Rendering
+   - 45-Second Executive Auto-Tour Engine
+   - Network Data Conduit with packet stream
+   - 6-Axis Hydraulic Robot Kinematics & Bouncing Sparks
+   - Mechanical E-Stop Brake Reaction
+   - CISA AA26-097A Quarantine Barrier
    ========================================================================== */
 
 (function () {
@@ -14,7 +19,13 @@
     tampered: false,          // CISA AA26-097A logic tampering state
     audioEnabled: false,
     
-    // Physical kinematic & motion parameters
+    // Auto-Tour Engine
+    tourActive: false,
+    tourTimer: null,
+    tourProgress: 0,
+    tourInterval: null,
+    
+    // Physical kinematics & motion
     robotAngle1: 0,
     robotAngle2: 0,
     robotWeldPhase: 0,
@@ -28,7 +39,6 @@
     
     // Network packet conduit animation
     packetBusProgress: 0,
-    packets: [],
     
     // Particle spark & smoke systems
     sparks: [],
@@ -41,6 +51,13 @@
   };
 
   // DOM REFERENCES
+  const autoTourBtn = document.getElementById('autoTourBtn');
+  const tourIcon = document.getElementById('tourIcon');
+  const tourText = document.getElementById('tourText');
+  const tourProgressWrap = document.getElementById('tourProgressWrap');
+  const tourProgressFill = document.getElementById('tourProgressFill');
+  const tourStatusText = document.getElementById('tourStatusText');
+
   const storyStep1 = document.getElementById('storyStep1');
   const storyStep2 = document.getElementById('storyStep2');
   const storyStep3 = document.getElementById('storyStep3');
@@ -93,9 +110,19 @@
   // HUD SCRIPT DOM
   const hudScriptText = document.getElementById('hudScriptText');
 
-  // CANVAS INITIALIZATION
+  // CANVAS INITIALIZATION WITH HIGH-DPI SCALING
   const canvas = document.getElementById('twinCanvas');
   const ctx = canvas.getContext('2d');
+
+  function resizeCanvas() {
+    const dpr = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+    canvas.width = rect.width * dpr;
+    canvas.height = rect.height * dpr;
+    ctx.scale(dpr, dpr);
+  }
+  window.addEventListener('resize', resizeCanvas);
+  resizeCanvas();
 
   // WEB AUDIO SYNTHESIZER
   let audioCtx = null;
@@ -110,7 +137,7 @@
       const AudioContext = window.AudioContext || window.webkitAudioContext;
       audioCtx = new AudioContext();
 
-      // 60Hz transformer hum
+      // 60Hz hum
       humOsc = audioCtx.createOscillator();
       humOsc.type = 'sine';
       humOsc.frequency.setValueAtTime(60, audioCtx.currentTime);
@@ -178,7 +205,7 @@
 
       state.targetLatency = 32.2;
       state.robotFaultFreeze = true;
-      state.brakeJerkOffset = (Math.random() - 0.5) * 8; // Mechanical brake stutter
+      state.brakeJerkOffset = (Math.random() - 0.5) * 8;
       playWatchdogTripAlarm();
 
       spotlightCard(cardLatency);
@@ -327,23 +354,120 @@
     }
   }
 
-  // 3-STEP STORYBOARD HANDLERS
+  // 45-SECOND EXECUTIVE AUTO-TOUR ENGINE
+  function startAutoTour() {
+    if (state.tourActive) {
+      stopAutoTour();
+      return;
+    }
+
+    state.tourActive = true;
+    autoTourBtn.classList.add('active');
+    tourIcon.innerHTML = '&#9724;';
+    tourText.textContent = 'Stop Tour';
+    tourProgressWrap.classList.add('active');
+
+    let elapsed = 0;
+    const totalDuration = 45; // seconds
+
+    // Immediately trigger Step 1 (The Bottleneck)
+    if (state.tampered) toggleTampering();
+    setMode('before', 1);
+    tourStatusText.textContent = 'Auto-Tour (0-15s): Step 1 — The Bottleneck (Watch 32ms TLS breach watchdog)';
+
+    state.tourInterval = setInterval(() => {
+      elapsed += 0.25;
+      const pct = (elapsed / totalDuration) * 100;
+      tourProgressFill.style.width = `${Math.min(100, pct)}%`;
+
+      if (elapsed >= 15 && elapsed < 30 && state.mode === 'before') {
+        // Trigger Step 2 (The Solution)
+        setMode('after', 2);
+        tourStatusText.textContent = 'Auto-Tour (15-30s): Step 2 — The Solution (CIP-Shield eBPF 0.84ms Fast-Path & Sparks)';
+      } else if (elapsed >= 30 && elapsed < 44 && !state.tampered) {
+        // Trigger Step 3 (CISA Logic Attestation)
+        toggleTampering();
+        tourStatusText.textContent = 'Auto-Tour (30-45s): Step 3 — CISA Trust Gap (Automated Quarantine at Stage 05)';
+      } else if (elapsed >= totalDuration) {
+        stopAutoTour();
+      }
+    }, 250);
+  }
+
+  function stopAutoTour() {
+    clearInterval(state.tourInterval);
+    state.tourActive = false;
+    autoTourBtn.classList.remove('active');
+    tourIcon.innerHTML = '&#9658;';
+    tourText.textContent = 'Watch 45s Auto-Tour';
+    tourProgressWrap.classList.remove('active');
+    tourProgressFill.style.width = '0%';
+    if (state.tampered) toggleTampering();
+    setMode('after', 2);
+  }
+
+  // EVENT LISTENERS
+  autoTourBtn.addEventListener('click', startAutoTour);
+
   storyStep1.addEventListener('click', () => {
+    if (state.tourActive) stopAutoTour();
     if (state.tampered) toggleTampering();
     setMode('before', 1);
   });
 
   storyStep2.addEventListener('click', () => {
+    if (state.tourActive) stopAutoTour();
     if (state.tampered) toggleTampering();
     setMode('after', 2);
   });
 
   storyStep3.addEventListener('click', () => {
+    if (state.tourActive) stopAutoTour();
     if (!state.tampered) {
       toggleTampering();
     } else {
       spotlightCard(cardCisa);
     }
+  });
+
+  btnModeBefore.addEventListener('click', () => {
+    if (state.tourActive) stopAutoTour();
+    setMode('before', 1);
+  });
+  btnModeAfter.addEventListener('click', () => {
+    if (state.tourActive) stopAutoTour();
+    setMode('after', 2);
+  });
+  btnToggleTamper.addEventListener('click', toggleTampering);
+
+  btnTriggerSpike.addEventListener('click', () => {
+    const prevMode = state.mode;
+    setMode('before', 1);
+    setTimeout(() => {
+      if (prevMode === 'after') setMode('after', 2);
+    }, 4500);
+  });
+
+  audioToggleBtn.addEventListener('click', () => {
+    state.audioEnabled = !state.audioEnabled;
+    if (state.audioEnabled) {
+      initAudio();
+      audioIcon.innerHTML = '&#128266;';
+      audioToggleBtn.innerHTML = '<span>&#128266;</span> Sound ON';
+      audioToggleBtn.classList.add('active');
+    } else {
+      audioIcon.innerHTML = '&#128263;';
+      audioToggleBtn.innerHTML = '<span>&#128263;</span> Sound OFF';
+      audioToggleBtn.classList.remove('active');
+      if (servoGain) servoGain.gain.setValueAtTime(0, audioCtx.currentTime);
+      if (humGain) humGain.gain.setValueAtTime(0, audioCtx.currentTime);
+    }
+  });
+
+  qrBtn.addEventListener('click', () => qrModal.classList.add('open'));
+  closeQrBtn.addEventListener('click', () => qrModal.classList.remove('open'));
+  qrModal.addEventListener('click', (e) => {
+    if (e.target === qrModal) qrModal.classList.remove('open');
   });
 
   // PARTICLES: SPARKS & SMOKE
@@ -376,15 +500,14 @@
   }
 
   function updateAndDrawParticles() {
-    // 1. Draw and update sparks
+    // Sparks
     for (let i = state.sparks.length - 1; i >= 0; i--) {
       const p = state.sparks[i];
       p.x += p.vx;
       p.y += p.vy;
-      p.vy += 0.16; // Gravity
+      p.vy += 0.16;
       p.life -= p.decay;
 
-      // Bounce off floor or workpiece plate (y > 420)
       if (p.y > 420 && p.vy > 0) {
         p.vy = -p.vy * 0.45;
         p.vx *= 0.7;
@@ -395,7 +518,6 @@
         continue;
       }
 
-      // Hot metal color gradient
       const r = 255;
       const g = Math.floor(200 * p.life + 55);
       const b = Math.floor(50 * p.life);
@@ -405,7 +527,7 @@
       ctx.fill();
     }
 
-    // 2. Draw and update smoke
+    // Smoke
     for (let i = state.smoke.length - 1; i >= 0; i--) {
       const s = state.smoke[i];
       s.x += s.vx;
@@ -427,12 +549,13 @@
 
   // CANVAS RENDERER: NETWORK DATA PIPE + 6-AXIS HYDRAULIC ROBOT
   function renderCanvas() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    const rect = canvas.getBoundingClientRect();
+    const w = rect.width;
+    const h = rect.height;
 
-    const w = canvas.width;
-    const h = canvas.height;
+    ctx.clearRect(0, 0, w, h);
 
-    // 1. Dark Factory Floor Grid
+    // 1. Factory Floor Grid
     ctx.strokeStyle = '#101726';
     ctx.lineWidth = 1;
     for (let x = 0; x < w; x += 36) {
@@ -448,10 +571,10 @@
       ctx.stroke();
     }
 
-    // 2. INDUSTRIAL NETWORK DATA CONDUIT (TOP OF CANVAS)
+    // 2. INDUSTRIAL NETWORK DATA CONDUIT
     const pipeY = 32;
-    const pipeStartX = 40;
-    const pipeEndX = w - 40;
+    const pipeStartX = 30;
+    const pipeEndX = w - 30;
 
     // Background Conduit Track
     ctx.fillStyle = '#090E17';
@@ -464,11 +587,11 @@
 
     // Node Badges along Network Pipe
     const nodes = [
-      { x: pipeStartX + 60, name: 'Studio 5000' },
-      { x: pipeStartX + 220, name: 'Cell Switch' },
-      { x: pipeStartX + 420, name: state.mode === 'after' ? 'eBPF Gateway' : 'TLS Gateway' },
-      { x: pipeStartX + 640, name: '1756-EN4TR' },
-      { x: pipeStartX + 800, name: 'Kinetix Servos' }
+      { x: pipeStartX + 55, name: 'Studio 5000' },
+      { x: pipeStartX + 210, name: 'Cell Switch' },
+      { x: pipeStartX + 410, name: state.mode === 'after' ? 'eBPF Gateway' : 'TLS Gateway' },
+      { x: pipeStartX + 630, name: '1756-EN4TR' },
+      { x: pipeStartX + 790, name: 'Kinetix Servos' }
     ];
 
     nodes.forEach(n => {
@@ -476,7 +599,7 @@
       ctx.strokeStyle = '#334460';
       ctx.lineWidth = 1;
       ctx.beginPath();
-      ctx.roundRect(n.x - 45, pipeY - 10, 90, 20, 3);
+      ctx.roundRect(n.x - 42, pipeY - 10, 84, 20, 3);
       ctx.fill();
       ctx.stroke();
 
@@ -493,7 +616,7 @@
       // CIP-Shield: Continuous stream of green/cyan micro-packets
       for (let i = 0; i < 7; i++) {
         const offset = (state.packetBusProgress + (i / 7)) % 1.0;
-        const px = pipeStartX + 70 + offset * (pipeEndX - pipeStartX - 140);
+        const px = pipeStartX + 60 + offset * (pipeEndX - pipeStartX - 120);
         
         ctx.fillStyle = '#10B981';
         ctx.shadowColor = '#10B981';
@@ -509,7 +632,7 @@
       }
 
       // Gateway verification pulse ring
-      const gwX = pipeStartX + 420;
+      const gwX = pipeStartX + 410;
       ctx.strokeStyle = 'rgba(16, 185, 129, 0.7)';
       ctx.lineWidth = 2;
       ctx.beginPath();
@@ -518,7 +641,7 @@
 
     } else {
       // TLS Mode: Bloated, stalled packet in the middle causing blockage
-      const gwX = pipeStartX + 420;
+      const gwX = pipeStartX + 410;
       ctx.fillStyle = '#EF4444';
       ctx.shadowColor = '#EF4444';
       ctx.shadowBlur = 12;
@@ -599,7 +722,7 @@
     ctx.lineTo(j2x, j2y);
     ctx.stroke();
 
-    // Animated Hydraulic Piston 1 (Telescoping Cylinder)
+    // Animated Hydraulic Piston 1
     const p1BaseX = j1x - 12;
     const p1BaseY = j1y - 8;
     const p1RodX = j2x - 10;
@@ -726,41 +849,6 @@
 
     requestAnimationFrame(renderCanvas);
   }
-
-  // EVENT LISTENERS
-  btnModeBefore.addEventListener('click', () => setMode('before', 1));
-  btnModeAfter.addEventListener('click', () => setMode('after', 2));
-  btnToggleTamper.addEventListener('click', toggleTampering);
-
-  btnTriggerSpike.addEventListener('click', () => {
-    const prevMode = state.mode;
-    setMode('before', 1);
-    setTimeout(() => {
-      if (prevMode === 'after') setMode('after', 2);
-    }, 4500);
-  });
-
-  audioToggleBtn.addEventListener('click', () => {
-    state.audioEnabled = !state.audioEnabled;
-    if (state.audioEnabled) {
-      initAudio();
-      audioIcon.innerHTML = '&#128266;';
-      audioToggleBtn.innerHTML = '<span>&#128266;</span> Sound ON';
-      audioToggleBtn.classList.add('active');
-    } else {
-      audioIcon.innerHTML = '&#128263;';
-      audioToggleBtn.innerHTML = '<span>&#128263;</span> Sound OFF';
-      audioToggleBtn.classList.remove('active');
-      if (servoGain) servoGain.gain.setValueAtTime(0, audioCtx.currentTime);
-      if (humGain) humGain.gain.setValueAtTime(0, audioCtx.currentTime);
-    }
-  });
-
-  qrBtn.addEventListener('click', () => qrModal.classList.add('open'));
-  closeQrBtn.addEventListener('click', () => qrModal.classList.remove('open'));
-  qrModal.addEventListener('click', (e) => {
-    if (e.target === qrModal) qrModal.classList.remove('open');
-  });
 
   // ROLLING DOT-MATRIX LED
   setInterval(() => {
